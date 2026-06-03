@@ -5,7 +5,7 @@ import java.util.UUID;
 
 /**
  * Thrown when no account exists for the given ID.
- * Maps to HTTP 404 via the global exception handler.
+ * Maps to HTTP 404 via GlobalExceptionHandler.
  */
 public class AccountNotFoundException extends RuntimeException {
 

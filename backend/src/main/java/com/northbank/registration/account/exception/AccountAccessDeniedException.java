@@ -2,8 +2,9 @@
 package com.northbank.registration.account.exception;
 
 /**
- * Thrown when a customer tries to access another customer's account.
- * Maps to HTTP 403 via the global exception handler.
+ * Thrown when a customer attempts to access an account that belongs
+ * to a different customer (AC3).
+ * Maps to HTTP 403 via GlobalExceptionHandler.
  */
 public class AccountAccessDeniedException extends RuntimeException {
 
