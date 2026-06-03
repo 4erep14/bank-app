@@ -148,7 +148,7 @@ function AccountCard({ account }: { account: AccountSummaryItem }) {
     currency:              'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(account.balance);
+  }).format(Number(account.balance));
 
   return (
     <li className="account-card">
