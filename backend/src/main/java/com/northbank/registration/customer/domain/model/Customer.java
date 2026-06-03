@@ -1,4 +1,4 @@
-// Story: US-001 / US-002
+// Story: US-001 / US-002 / US-009
 package com.northbank.registration.customer.domain.model;
 
 import jakarta.persistence.*;
@@ -16,10 +16,11 @@ import java.util.UUID;
  * <p>password_hash is intentionally excluded from {@code toString()} and must never
  * appear in logs or API responses.</p>
  *
- * <p>US-002 adds: {@code failedLoginAttempts}, {@code lockedAt},
- * {@code passwordChangedAt} (forward-compat for US-004).</p>
+ * <p>US-002 adds: {@code failedLoginAttempts}, {@code lockedAt}, {@code passwordChangedAt}.</p>
+ * <p>US-009 adds: {@code role} (CUSTOMER | ADMIN) to support admin-only endpoints.</p>
  *
  * @see CustomerStatus
+ * @see CustomerRole
  */
 @Entity
 @Table(
@@ -69,28 +70,27 @@ public class Customer {
     @Builder.Default
     private CustomerStatus status = CustomerStatus.PENDING_VERIFICATION;
 
-    // ── US-002: Login lockout fields (V2 migration) ──────────────────────────
-
     /**
-     * Consecutive failed login attempts since last success.
-     * Reset to 0 on successful login. Reaches 5 → account is LOCKED (AC4).
+     * Application role. Defaults to {@code CUSTOMER} for all self-registered users.
+     * Set to {@code ADMIN} by a privileged database operation or a future admin-management story.
      */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    @Builder.Default
+    private CustomerRole role = CustomerRole.CUSTOMER;
+
+    // ── US-002: Login lockout fields ─────────────────────────────────────────
+
     @Column(name = "failed_login_attempts", nullable = false)
     @Builder.Default
     private int failedLoginAttempts = 0;
 
-    /**
-     * Timestamp when the account was locked due to too many failed attempts.
-     * Null if the account has never been locked.
-     */
     @Column(name = "locked_at")
     private OffsetDateTime lockedAt;
 
     /**
      * Timestamp of the last password change.
-     * Used by the JWT authentication filter (US-004) to invalidate
-     * tokens issued before a password reset.
-     * Null means password has never been explicitly changed.
+     * Used by JwtAuthenticationFilter (US-004) to invalidate pre-change tokens.
      */
     @Column(name = "password_changed_at", columnDefinition = "TIMESTAMPTZ")
     private OffsetDateTime passwordChangedAt;
