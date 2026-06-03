@@ -1,4 +1,4 @@
-// Story: US-001 | US-002 | US-003 | US-004 | US-005 | US-006 | US-007 | US-008
+// Story: US-001 | US-002 | US-003 | US-004 | US-005 | US-006 | US-007 | US-008 | US-010
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RegistrationPage from '@/features/registration/pages/RegistrationPage';
 import RegistrationSuccess from '@/features/registration/components/RegistrationSuccess';
@@ -13,7 +13,9 @@ import ResetTokenErrorPage from '@/features/auth/pages/ResetTokenErrorPage';
 import ProfilePage from '@/features/profile/pages/ProfilePage';
 import DashboardPage from '@/features/dashboard/pages/DashboardPage';
 // US-006 | US-007 | US-008: Account pages
-import AccountDetailPage from '@/features/accounts/AccountDetailPage';
+import { AccountDetailPage } from '@/features/accounts/AccountDetailPage';
+// US-010: Internal fund transfer
+import TransferPage from '@/features/transactions/pages/TransferPage';
 
 export const router = createBrowserRouter([
   {
@@ -86,5 +88,10 @@ export const router = createBrowserRouter([
     // accountId is the UUID of the BankAccount entity.
     path: '/accounts/:accountId',
     element: <AccountDetailPage />,
+  },
+  {
+    // US-010: Transfer funds between own active accounts.
+    path: '/transfer',
+    element: <TransferPage />,
   },
 ]);
