@@ -1,7 +1,8 @@
-// Story: US-006 | US-007
+// Story: US-006 + US-007 + US-008
 package com.northbank.registration.account.controller;
 
 import com.northbank.registration.account.service.AccountService;
+import com.northbank.registration.account.service.dto.AccountDetailResponse;
 import com.northbank.registration.account.service.dto.AccountSummaryResponse;
 import com.northbank.registration.account.service.dto.OpenAccountRequest;
 import com.northbank.registration.account.service.dto.OpenAccountResponse;
@@ -34,11 +35,6 @@ import java.util.UUID;
  * REST controller for bank account management (EPIC-02).
  *
  * <p>All endpoints require a valid JWT Bearer token.</p>
- *
- * <ul>
- *   <li>US-006: {@code POST /api/v1/accounts}  — open a new account</li>
- *   <li>US-007: {@code GET  /api/v1/accounts}  — list accounts & balances</li>
- * </ul>
  */
 @Slf4j
 @RestController
@@ -50,13 +46,12 @@ public class AccountController {
 
     private final AccountService accountService;
 
-    // ── US-006: Open account ──────────────────────────────────────────────────
+    // ── US-006: Open account ───────────────────────────────────────────
 
     @Operation(
         summary     = "Open a new bank account",
         description = "Creates a CHECKING or SAVINGS account for the authenticated customer. " +
-                      "A customer may hold at most one of each type. " +
-                      "Returns 409 with 'Account of this type already exists' on duplicate."
+                      "A customer may hold at most one of each type. Returns 409 on duplicate."
     )
     @ApiResponses({
         @ApiResponse(
@@ -72,23 +67,14 @@ public class AccountController {
                 schema    = @Schema(implementation = OpenAccountResponse.class)
             )
         ),
-        @ApiResponse(
-            responseCode = "400",
-            description  = "Validation error — type field is missing or not a valid enum value",
-            content      = @Content(mediaType = "application/problem+json",
-                                    schema = @Schema(implementation = ProblemDetail.class))
-        ),
-        @ApiResponse(
-            responseCode = "401",
-            description  = "Unauthenticated request — valid Bearer JWT required",
-            content      = @Content(mediaType = "application/problem+json")
-        ),
-        @ApiResponse(
-            responseCode = "409",
-            description  = "Account of this type already exists for the customer (AC5)",
-            content      = @Content(mediaType = "application/problem+json",
-                                    schema = @Schema(implementation = ProblemDetail.class))
-        )
+        @ApiResponse(responseCode = "400", description = "Validation error — type field missing or invalid",
+            content = @Content(mediaType = "application/problem+json",
+                               schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthenticated request",
+            content = @Content(mediaType = "application/problem+json")),
+        @ApiResponse(responseCode = "409", description = "Account of this type already exists (AC5)",
+            content = @Content(mediaType = "application/problem+json",
+                               schema = @Schema(implementation = ProblemDetail.class)))
     })
     @PostMapping(
         consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -113,13 +99,11 @@ public class AccountController {
         return ResponseEntity.created(location).body(response);
     }
 
-    // ── US-007: List accounts ─────────────────────────────────────────────────
+    // ── US-007: List accounts ────────────────────────────────────────
 
     @Operation(
         summary     = "List all accounts",
-        description = "Returns all CHECKING and SAVINGS accounts for the authenticated customer. " +
-                      "Balances are always formatted to 2 decimal places. " +
-                      "Returns an empty array [] when the customer has no accounts (AC4)."
+        description = "Returns all bank accounts owned by the authenticated customer, newest first."
     )
     @ApiResponses({
         @ApiResponse(
@@ -130,11 +114,8 @@ public class AccountController {
                 array     = @ArraySchema(schema = @Schema(implementation = AccountSummaryResponse.class))
             )
         ),
-        @ApiResponse(
-            responseCode = "401",
-            description  = "Unauthenticated request — valid Bearer JWT required (AC6)",
-            content      = @Content(mediaType = "application/problem+json")
-        )
+        @ApiResponse(responseCode = "401", description = "Unauthenticated request",
+            content = @Content(mediaType = "application/problem+json"))
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<AccountSummaryResponse>> listAccounts(
@@ -144,5 +125,41 @@ public class AccountController {
         log.debug("List accounts request: customerId={}", customerId);
 
         return ResponseEntity.ok(accountService.listAccounts(customerId));
+    }
+
+    // ── US-008: Get account detail ─────────────────────────────────────
+
+    @Operation(
+        summary     = "Get account details",
+        description = "Returns full details of a specific account. " +
+                      "Returns 403 if the account belongs to a different customer, 404 if not found."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description  = "Account details returned",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = AccountDetailResponse.class)
+            )
+        ),
+        @ApiResponse(responseCode = "401", description = "Unauthenticated request (AC5)",
+            content = @Content(mediaType = "application/problem+json")),
+        @ApiResponse(responseCode = "403", description = "Account belongs to a different customer (AC3)",
+            content = @Content(mediaType = "application/problem+json",
+                               schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(responseCode = "404", description = "Account not found (AC4)",
+            content = @Content(mediaType = "application/problem+json",
+                               schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<AccountDetailResponse> getAccountDetail(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        UUID customerId = UUID.fromString(jwt.getSubject());
+        log.debug("Get account detail: id={}, customerId={}", id, customerId);
+
+        return ResponseEntity.ok(accountService.getAccountDetail(customerId, id));
     }
 }

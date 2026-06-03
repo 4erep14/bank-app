@@ -1,9 +1,12 @@
-// Story: US-006 | US-007
+// Story: US-006 + US-008
 package com.northbank.registration.account.service;
 
 import com.northbank.registration.account.domain.model.BankAccount;
+import com.northbank.registration.account.exception.AccountAccessDeniedException;
+import com.northbank.registration.account.exception.AccountNotFoundException;
 import com.northbank.registration.account.exception.DuplicateAccountTypeException;
 import com.northbank.registration.account.repository.AccountRepository;
+import com.northbank.registration.account.service.dto.AccountDetailResponse;
 import com.northbank.registration.account.service.dto.AccountSummaryResponse;
 import com.northbank.registration.account.service.dto.OpenAccountRequest;
 import com.northbank.registration.account.service.dto.OpenAccountResponse;
@@ -12,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.List;
@@ -22,7 +26,8 @@ import java.util.UUID;
  *
  * <ul>
  *   <li>US-006: Opens a new CHECKING or SAVINGS account.</li>
- *   <li>US-007: Lists all accounts for an authenticated customer.</li>
+ *   <li>US-007: Lists all accounts for a customer.</li>
+ *   <li>US-008: Returns full details of a single account with ownership check.</li>
  * </ul>
  */
 @Slf4j
@@ -30,17 +35,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AccountService {
 
-    private static final int          MAX_GENERATION_ATTEMPTS = 10;
-    private static final SecureRandom SECURE_RANDOM           = new SecureRandom();
+    private static final int ACCOUNT_NUMBER_LENGTH = 10;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final AccountRepository accountRepository;
 
-    // ── US-006 ────────────────────────────────────────────────────────────────
+    // ── US-006 ───────────────────────────────────────────────────────────────
 
     /**
      * Opens a new bank account for the given customer.
      *
-     * @param customerId authenticated customer's UUID (extracted from JWT at controller layer)
+     * @param customerId authenticated customer UUID (extracted from JWT at controller layer)
      * @param request    contains the desired account type
      * @return the newly created account details
      * @throws DuplicateAccountTypeException if the customer already owns an account of this type (AC5)
@@ -60,61 +65,80 @@ public class AccountService {
                 .accountNumber(accountNumber)
                 .type(request.type())
                 .customerId(customerId)
-                .build(); // balance=0.00, status=ACTIVE via @Builder.Default
+                .build();
 
         BankAccount saved = accountRepository.save(account);
         log.info("Account opened: id={}, type={}, customer={}", saved.getId(), saved.getType(), customerId);
 
-        return toOpenResponse(saved);
+        return toResponse(saved);
     }
 
-    // ── US-007 ────────────────────────────────────────────────────────────────
+    // ── US-007 ───────────────────────────────────────────────────────────────
 
     /**
-     * Returns all accounts for the authenticated customer.
+     * Returns a summary list of all accounts owned by the customer, newest first.
      *
-     * <p>AC3: Scoped strictly to {@code customerId} — no cross-customer leakage.<br>
-     * AC4: Returns an empty list when the customer has no accounts.<br>
-     * AC5: Balance is scaled to exactly 2 decimal places before serialization.</p>
-     *
-     * @param customerId extracted from JWT at controller layer
-     * @return list of account summaries, ordered newest-first
+     * @param customerId authenticated customer UUID
+     * @return list of account summaries (may be empty)
      */
     @Transactional(readOnly = true)
     public List<AccountSummaryResponse> listAccounts(UUID customerId) {
         log.debug("Listing accounts for customer {}", customerId);
-
-        return accountRepository
-                .findAllByCustomerIdOrderByCreatedAtDesc(customerId)
+        return accountRepository.findAllByCustomerIdOrderByCreatedAtDesc(customerId)
                 .stream()
                 .map(this::toSummary)
                 .toList();
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // ── US-008 ───────────────────────────────────────────────────────────────
+
+    /**
+     * Returns full details of a single account.
+     *
+     * @param customerId authenticated customer UUID (from JWT)
+     * @param accountId  requested account UUID
+     * @return account detail view
+     * @throws AccountNotFoundException     if no account with accountId exists (AC4)
+     * @throws AccountAccessDeniedException if the account belongs to a different customer (AC3)
+     */
+    @Transactional(readOnly = true)
+    public AccountDetailResponse getAccountDetail(UUID customerId, UUID accountId) {
+        log.debug("Account detail request: accountId={}, customerId={}", accountId, customerId);
+
+        BankAccount account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId));
+
+        // AC3: ownership check — 403 before leaking any account data
+        if (!account.getCustomerId().equals(customerId)) {
+            log.warn("Ownership violation: customerId={} attempted access to accountId={}", customerId, accountId);
+            throw new AccountAccessDeniedException();
+        }
+
+        return toDetail(account);
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────────
 
     /**
      * Generates a unique 10-digit numeric account number.
-     * First digit is always 1-9 (no leading zeros).
-     *
-     * @throws IllegalStateException after MAX_GENERATION_ATTEMPTS consecutive collisions
+     * Retries on collision (astronomically unlikely in practice).
      */
     private String generateUniqueAccountNumber() {
-        for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
-            long firstDigit = 1L + (long) (SECURE_RANDOM.nextDouble() * 9);
+        String number;
+        int attempts = 0;
+        do {
+            long firstDigit = 1 + (long) (SECURE_RANDOM.nextDouble() * 9);
             long remaining  = (long) (SECURE_RANDOM.nextDouble() * 1_000_000_000L);
-            String candidate = String.format("%d%09d", firstDigit, remaining);
-
-            if (!accountRepository.existsByAccountNumber(candidate)) {
-                return candidate;
+            number = String.format("%d%09d", firstDigit, remaining);
+            attempts++;
+            if (attempts > 10) {
+                throw new IllegalStateException("Unable to generate unique account number after 10 attempts");
             }
-            log.warn("Account number collision on attempt {}/{}", attempt, MAX_GENERATION_ATTEMPTS);
-        }
-        throw new IllegalStateException(
-                "Unable to generate a unique account number after " + MAX_GENERATION_ATTEMPTS + " attempts");
+        } while (accountRepository.existsByAccountNumber(number));
+        return number;
     }
 
-    private OpenAccountResponse toOpenResponse(BankAccount account) {
+    private OpenAccountResponse toResponse(BankAccount account) {
         return new OpenAccountResponse(
                 account.getId(),
                 account.getAccountNumber(),
@@ -127,10 +151,22 @@ public class AccountService {
 
     private AccountSummaryResponse toSummary(BankAccount account) {
         return new AccountSummaryResponse(
+                account.getId(),
                 account.getAccountNumber(),
                 account.getType(),
-                account.getBalance().setScale(2, RoundingMode.UNNECESSARY), // AC5
+                account.getBalance().setScale(2, RoundingMode.UNNECESSARY),
                 account.getStatus()
+        );
+    }
+
+    private AccountDetailResponse toDetail(BankAccount account) {
+        return new AccountDetailResponse(
+                account.getId(),
+                account.getAccountNumber(),
+                account.getType(),
+                account.getBalance().setScale(2, RoundingMode.UNNECESSARY),
+                account.getStatus(),
+                account.getCreatedAt()
         );
     }
 }
