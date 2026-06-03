@@ -1,6 +1,7 @@
--- V4__otp_and_refresh_tokens.sql
+-- V5__otp_and_refresh_tokens.sql
 -- Story: US-003 — Two-Factor Authentication via SMS
--- Depends on: V1 (customers), V2 (login lockout), V3 (password reset)
+-- Renamed from V4 → V5 to resolve version conflict with V4__create_accounts_table.sql
+-- Depends on: V1 (customers), V2 (login lockout), V3 (password reset), V4 (accounts)
 
 -- OTP session store.
 -- session_token_hash: SHA-256 hex of the raw SESSION JWT — never the raw token itself.
