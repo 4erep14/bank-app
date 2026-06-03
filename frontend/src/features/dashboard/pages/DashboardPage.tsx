@@ -1,68 +1,61 @@
-// Story: US-005
+// Story: US-005 | US-007
 import { Link } from 'react-router-dom';
+import { AccountList } from '@/features/accounts/AccountList';
 
 /**
- * DashboardPage — minimal authenticated landing page.
+ * DashboardPage — authenticated landing page.
  *
- * US-003 (useVerifyOtp) navigates to /dashboard on successful OTP verification.
- * This page serves as the entry point for authenticated customers,
- * with a prominent link to the Profile page (US-005).
+ * US-005: Entry point after OTP verification; links to Profile.
+ * US-007: Embeds AccountList to display the customer's accounts and balances.
  */
 export default function DashboardPage() {
   return (
     <main
-      className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4"
+      className="dashboard"
       aria-labelledby="dashboard-heading"
     >
-      {/* NorthBank brand mark */}
-      <div
-        aria-hidden="true"
-        className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600"
-      >
-        <svg
-          className="h-8 w-8 text-white"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 3L2 9h20L12 3ZM4 9v9m4-9v9m4-9v9m4-9v9M2 18h20"
-          />
-        </svg>
-      </div>
-
-      <h1
-        id="dashboard-heading"
-        className="text-2xl font-bold text-gray-900 sm:text-3xl"
-      >
-        Welcome to NorthBank
-      </h1>
-
-      <p className="mt-2 text-center text-sm text-gray-500">
-        You're now securely signed in to your account.
-      </p>
-
-      <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row">
-        <Link
-          to="/profile"
-          aria-label="View and update your profile"
-          className="inline-flex items-center gap-2 rounded-md bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
-        >
-          {/* User icon */}
+      {/* ── Top bar ──────────────────────────────────────────────────────── */}
+      <header className="dashboard-header">
+        <div className="dashboard-brand">
           <svg
             aria-hidden="true"
-            className="h-4 w-4"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+            className="dashboard-brand__icon"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
           >
-            <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 3L2 9h20L12 3ZM4 9v9m4-9v9m4-9v9m4-9v9M2 18h20"
+            />
           </svg>
-          My Profile
-        </Link>
+          <span className="dashboard-brand__name">NorthBank</span>
+        </div>
+
+        <nav aria-label="Primary navigation">
+          <Link
+            to="/profile"
+            className="btn btn-ghost btn--sm"
+            aria-label="View and update your profile"
+          >
+            My Profile
+          </Link>
+        </nav>
+      </header>
+
+      {/* ── Page content ─────────────────────────────────────────────────── */}
+      <div className="dashboard-content">
+        <h1 id="dashboard-heading" className="dashboard-welcome">
+          Welcome back
+        </h1>
+        <p className="dashboard-subtitle">
+          Here’s an overview of your accounts.
+        </p>
+
+        {/* US-007: Account list with live balances */}
+        <AccountList />
       </div>
     </main>
   );

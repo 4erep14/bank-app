@@ -1,11 +1,13 @@
-// Story: US-006
+// Story: US-006 | US-007
 package com.northbank.registration.account.controller;
 
 import com.northbank.registration.account.service.AccountService;
+import com.northbank.registration.account.service.dto.AccountSummaryResponse;
 import com.northbank.registration.account.service.dto.OpenAccountRequest;
 import com.northbank.registration.account.service.dto.OpenAccountResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,12 +27,18 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 /**
  * REST controller for bank account management (EPIC-02).
  *
- * <p>All endpoints require a valid JWT Bearer token (AC6).</p>
+ * <p>All endpoints require a valid JWT Bearer token.</p>
+ *
+ * <ul>
+ *   <li>US-006: {@code POST /api/v1/accounts}  — open a new account</li>
+ *   <li>US-007: {@code GET  /api/v1/accounts}  — list accounts & balances</li>
+ * </ul>
  */
 @Slf4j
 @RestController
@@ -42,12 +50,8 @@ public class AccountController {
 
     private final AccountService accountService;
 
-    /**
-     * Open a new bank account (US-006).
-     *
-     * <p>Authenticated customer can request a CHECKING or SAVINGS account.
-     * At most one of each type is allowed per customer (AC5).</p>
-     */
+    // ── US-006: Open account ──────────────────────────────────────────────────
+
     @Operation(
         summary     = "Open a new bank account",
         description = "Creates a CHECKING or SAVINGS account for the authenticated customer. " +
@@ -71,23 +75,19 @@ public class AccountController {
         @ApiResponse(
             responseCode = "400",
             description  = "Validation error — type field is missing or not a valid enum value",
-            content      = @Content(
-                mediaType = "application/problem+json",
-                schema    = @Schema(implementation = ProblemDetail.class)
-            )
+            content      = @Content(mediaType = "application/problem+json",
+                                    schema = @Schema(implementation = ProblemDetail.class))
         ),
         @ApiResponse(
             responseCode = "401",
-            description  = "Unauthenticated request — valid Bearer JWT required (AC6)",
+            description  = "Unauthenticated request — valid Bearer JWT required",
             content      = @Content(mediaType = "application/problem+json")
         ),
         @ApiResponse(
             responseCode = "409",
             description  = "Account of this type already exists for the customer (AC5)",
-            content      = @Content(
-                mediaType = "application/problem+json",
-                schema    = @Schema(implementation = ProblemDetail.class)
-            )
+            content      = @Content(mediaType = "application/problem+json",
+                                    schema = @Schema(implementation = ProblemDetail.class))
         )
     })
     @PostMapping(
@@ -111,5 +111,38 @@ public class AccountController {
                 .toUri();
 
         return ResponseEntity.created(location).body(response);
+    }
+
+    // ── US-007: List accounts ─────────────────────────────────────────────────
+
+    @Operation(
+        summary     = "List all accounts",
+        description = "Returns all CHECKING and SAVINGS accounts for the authenticated customer. " +
+                      "Balances are always formatted to 2 decimal places. " +
+                      "Returns an empty array [] when the customer has no accounts (AC4)."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description  = "Account list returned (may be empty)",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                array     = @ArraySchema(schema = @Schema(implementation = AccountSummaryResponse.class))
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description  = "Unauthenticated request — valid Bearer JWT required (AC6)",
+            content      = @Content(mediaType = "application/problem+json")
+        )
+    })
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<AccountSummaryResponse>> listAccounts(
+            @AuthenticationPrincipal Jwt jwt) {
+
+        UUID customerId = UUID.fromString(jwt.getSubject());
+        log.debug("List accounts request: customerId={}", customerId);
+
+        return ResponseEntity.ok(accountService.listAccounts(customerId));
     }
 }
