@@ -1,0 +1,81 @@
+// Story: US-001 | US-002 | US-003 | US-004 | US-005
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import RegistrationPage from '@/features/registration/pages/RegistrationPage';
+import RegistrationSuccess from '@/features/registration/components/RegistrationSuccess';
+import LoginPage from '@/features/auth/pages/LoginPage';
+import OtpVerificationPage from '@/features/auth/pages/OtpVerificationPage';
+import ForgotPasswordPage from '@/features/auth/pages/ForgotPasswordPage';
+import ForgotPasswordSentPage from '@/features/auth/pages/ForgotPasswordSentPage';
+import ResetPasswordPage from '@/features/auth/pages/ResetPasswordPage';
+import ResetPasswordSuccessPage from '@/features/auth/pages/ResetPasswordSuccessPage';
+import ResetTokenErrorPage from '@/features/auth/pages/ResetTokenErrorPage';
+// US-005: Profile & Dashboard
+import ProfilePage from '@/features/profile/pages/ProfilePage';
+import DashboardPage from '@/features/dashboard/pages/DashboardPage';
+
+export const router = createBrowserRouter([
+  {
+    // Unauthenticated root → send users to login first (US-002).
+    // Once auth guards are in place (future story), this will check session state.
+    path: '/',
+    element: <Navigate to="/login" replace />,
+  },
+  {
+    // US-002: Customer Login
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
+    // US-001: Customer Registration
+    path: '/register',
+    element: <RegistrationPage />,
+  },
+  {
+    path: '/register/success',
+    element: <RegistrationSuccess />,
+  },
+  {
+    // US-003: OTP Verification (Two-Factor Authentication via SMS)
+    path: '/verify-otp',
+    element: <OtpVerificationPage />,
+  },
+  {
+    // US-005: Authenticated dashboard landing page
+    // useVerifyOtp (US-003) navigates here on successful OTP verification.
+    path: '/dashboard',
+    element: <DashboardPage />,
+  },
+  // ── US-005: Customer Profile ────────────────────────────────────────────────
+  {
+    // View and update the authenticated customer's profile (US-005)
+    path: '/profile',
+    element: <ProfilePage />,
+  },
+  // ── US-004: Password Reset ──────────────────────────────────────────────────
+  {
+    // Screen 1: Email submission form
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />,
+  },
+  {
+    // Screen 2: Anti-enumeration confirmation + resend
+    path: '/forgot-password/sent',
+    element: <ForgotPasswordSentPage />,
+  },
+  {
+    // Screen 3: New password form (reads ?token= from query string)
+    // Screen 5 is rendered inline when no token is present.
+    path: '/reset-password',
+    element: <ResetPasswordPage />,
+  },
+  {
+    // Screen 4: Success confirmation (AC4/AC5)
+    path: '/reset-password/success',
+    element: <ResetPasswordSuccessPage />,
+  },
+  {
+    // Screen 5: Expired/invalid token error (AC6/AC7)
+    path: '/reset-password/error',
+    element: <ResetTokenErrorPage />,
+  },
+]);

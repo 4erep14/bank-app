@@ -1,0 +1,27 @@
+# Story: US-001 — test profile configuration
+# Datasource is overridden at runtime by @DynamicPropertySource in IntegrationTestBase.
+# This file disables Flyway auto-start (Testcontainers controls the DB lifecycle).
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/testdb
+    username: test
+    password: test
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+  flyway:
+    enabled: true
+
+logging:
+  level:
+    root: WARN
+    com.northbank: INFO
+
+# ── JWT test secret (Story: US-002) ──────────────────────────────────────────
+# 34-char ASCII string → 34 bytes (≥ 32 required for HS256). Test-only — not sensitive.
+security:
+  jwt:
+    secret: "northbank-test-jwt-secret-us002!!!"
+    session-token-expiry-minutes: 5

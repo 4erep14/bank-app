@@ -1,0 +1,69 @@
+# NorthBank — full local stack
+# All application images are built from source inside Docker.
+# No pre-built artifacts from the host are required.
+#
+# Usage:
+#   docker compose up --build        # first run or after code changes
+#   docker compose up                 # subsequent runs (uses cached layers)
+#   docker compose down -v            # stop and remove volumes
+#
+# Endpoints (once running):
+#   Frontend  →  http://localhost:3000
+#   Backend   →  http://localhost:8080
+#   Swagger   →  http://localhost:8080/swagger-ui.html
+#   API docs  →  http://localhost:8080/api-docs
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:       northbank
+      POSTGRES_USER:     northbank
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U northbank -d northbank"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Backend (Spring Boot) ───────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile          # multi-stage: Maven compiles inside Docker
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL:      jdbc:postgresql://postgres:5432/northbank
+      SPRING_DATASOURCE_USERNAME: northbank
+      SPRING_DATASOURCE_PASSWORD: secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Frontend (React + nginx) ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile          # multi-stage: npm build inside Docker, served by nginx
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
