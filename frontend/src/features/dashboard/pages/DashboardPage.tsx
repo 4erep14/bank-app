@@ -57,6 +57,13 @@ export default function DashboardPage() {
             >
               My Profile
             </Link>
+            <Link
+              to="/notifications"
+              className="btn btn-ghost btn--sm"
+              aria-label="View notifications"
+            >
+              Notifications
+            </Link>
           </div>
         </nav>
       </header>

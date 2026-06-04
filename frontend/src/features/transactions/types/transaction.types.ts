@@ -1,5 +1,5 @@
 // Story: US-010 | US-011 | US-012 | US-013
-export type TransactionStatus = 'PENDING_EVALUATION' | 'COMPLETED' | 'BLOCKED';
+export type TransactionStatus = 'PENDING_EVALUATION' | 'COMPLETED' | 'BLOCKED' | 'REJECTED';
 export type TransactionType = 'TRANSFER';
 
 export interface CreateTransferRequest {

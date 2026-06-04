@@ -32,6 +32,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *   <li>{@code /api/v1/accounts/**}                  — authenticated, ACCESS JWT (US-006/007/008)</li>
  *   <li>{@code /api/v1/transactions/**}              — authenticated, ACCESS JWT (US-010/011/012)</li>
  *   <li>{@code /api/v1/admin/transactions/**}        — ADMIN role required (US-013)</li>
+ *   <li>{@code /api/v1/fraud/**}                     — FRAUD_ANALYST role required (US-014+)</li>
+ *   <li>{@code /api/v1/notifications/**}             — authenticated, ACCESS JWT (US-016)</li>
  *   <li>{@code /swagger-ui/**}, {@code /api-docs/**} — public (development)</li>
  *   <li>All other requests denied by default.</li>
  *   <li>CSRF disabled — stateless REST API.</li>
@@ -87,6 +89,12 @@ public class SecurityConfig {
 
                 // ── US-013: Admin transaction overview ────────────────────
                 .requestMatchers("/api/v1/admin/transactions/**").hasRole("ADMIN")
+
+                // ── EPIC-004: Fraud detection analyst tools ───────────────
+                .requestMatchers("/api/v1/fraud/**").hasRole("FRAUD_ANALYST")
+
+                // ── US-016: Customer notifications ────────────────────────
+                .requestMatchers("/api/v1/notifications/**").authenticated()
 
                 // ── US-010 / US-011 / US-012: Customer transactions ───────
                 .requestMatchers("/api/v1/transactions/**").authenticated()

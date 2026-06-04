@@ -4,5 +4,6 @@ package com.northbank.registration.transaction.domain.model;
 public enum TransactionStatus {
     PENDING_EVALUATION,
     COMPLETED,
-    BLOCKED
+    BLOCKED,
+    REJECTED
 }
