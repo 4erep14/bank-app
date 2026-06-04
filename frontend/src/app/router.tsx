@@ -20,6 +20,10 @@ import TransactionHistoryPage from '@/features/transactions/pages/TransactionHis
 import TransactionDetailPage from '@/features/transactions/pages/TransactionDetailPage';
 import AdminTransactionsPage from '@/features/transactions/pages/AdminTransactionsPage';
 import AdminTransactionDetailPage from '@/features/transactions/pages/AdminTransactionDetailPage';
+import FraudRulesPage from '@/features/fraud/pages/FraudRulesPage';
+import FraudAlertsPage from '@/features/fraud/pages/FraudAlertsPage';
+import FraudAlertDetailPage from '@/features/fraud/pages/FraudAlertDetailPage';
+import NotificationsPage from '@/features/notifications/pages/NotificationsPage';
 
 export const router = createBrowserRouter([
   {
@@ -117,5 +121,25 @@ export const router = createBrowserRouter([
     // US-013: Admin transaction detail.
     path: '/admin/transactions/:transactionId',
     element: <AdminTransactionDetailPage />,
+  },
+  {
+    // US-014: Fraud rule management.
+    path: '/fraud/rules',
+    element: <FraudRulesPage />,
+  },
+  {
+    // US-017: Fraud alert review queue.
+    path: '/fraud/alerts',
+    element: <FraudAlertsPage />,
+  },
+  {
+    // US-017 / US-018: Fraud alert detail and resolution.
+    path: '/fraud/alerts/:alertId',
+    element: <FraudAlertDetailPage />,
+  },
+  {
+    // US-016: Customer notification inbox.
+    path: '/notifications',
+    element: <NotificationsPage />,
   },
 ]);
