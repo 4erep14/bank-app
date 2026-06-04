@@ -41,9 +41,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL:      jdbc:postgresql://postgres:5432/northbank
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/northbank
       SPRING_DATASOURCE_USERNAME: northbank
       SPRING_DATASOURCE_PASSWORD: secret
+      SECURITY_JWT_SECRET: your-very-long-secret-at-least-32-characters
     depends_on:
       postgres:
         condition: service_healthy

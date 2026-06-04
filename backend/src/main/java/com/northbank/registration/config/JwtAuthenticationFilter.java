@@ -72,6 +72,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 ? uri.substring(contextPath.length())
                 : uri;
         return PUBLIC_EXACT_PATHS.contains(path)
+                || path.equals("/actuator/health")
+                || path.startsWith("/actuator/health/")
                 || path.startsWith("/swagger-ui")
                 || path.startsWith("/api-docs");
     }
