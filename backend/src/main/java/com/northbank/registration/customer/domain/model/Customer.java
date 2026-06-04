@@ -17,7 +17,7 @@ import java.util.UUID;
  * appear in logs or API responses.</p>
  *
  * <p>US-002 adds: {@code failedLoginAttempts}, {@code lockedAt}, {@code passwordChangedAt}.</p>
- * <p>US-009 adds: {@code role} (CUSTOMER | ADMIN) to support admin-only endpoints.</p>
+ * <p>US-009 adds: {@code role} to support privileged endpoints.</p>
  *
  * @see CustomerStatus
  * @see CustomerRole

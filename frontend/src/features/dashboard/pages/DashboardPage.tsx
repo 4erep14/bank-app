@@ -1,4 +1,4 @@
-// Story: US-005 | US-007
+// Story: US-005 | US-007 | US-010 | US-011
 import { Link } from 'react-router-dom';
 import { AccountList } from '@/features/accounts/AccountList';
 
@@ -35,13 +35,36 @@ export default function DashboardPage() {
         </div>
 
         <nav aria-label="Primary navigation">
-          <Link
-            to="/profile"
-            className="btn btn-ghost btn--sm"
-            aria-label="View and update your profile"
-          >
-            My Profile
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/transfer"
+              className="btn btn-primary btn--sm"
+              aria-label="Transfer money between your accounts"
+            >
+              Transfer
+            </Link>
+            <Link
+              to="/transactions"
+              className="btn btn-ghost btn--sm"
+              aria-label="View transaction history"
+            >
+              History
+            </Link>
+            <Link
+              to="/profile"
+              className="btn btn-ghost btn--sm"
+              aria-label="View and update your profile"
+            >
+              My Profile
+            </Link>
+            <Link
+              to="/notifications"
+              className="btn btn-ghost btn--sm"
+              aria-label="View notifications"
+            >
+              Notifications
+            </Link>
+          </div>
         </nav>
       </header>
 

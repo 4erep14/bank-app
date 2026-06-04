@@ -1,4 +1,4 @@
-// Story: US-001 | US-002 | US-003 | US-004 | US-005
+// Story: US-001 | US-002 | US-003 | US-004 | US-005 | US-006 | US-007 | US-008 | US-010 | US-011 | US-012 | US-013
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RegistrationPage from '@/features/registration/pages/RegistrationPage';
 import RegistrationSuccess from '@/features/registration/components/RegistrationSuccess';
@@ -12,6 +12,18 @@ import ResetTokenErrorPage from '@/features/auth/pages/ResetTokenErrorPage';
 // US-005: Profile & Dashboard
 import ProfilePage from '@/features/profile/pages/ProfilePage';
 import DashboardPage from '@/features/dashboard/pages/DashboardPage';
+// US-006 | US-007 | US-008: Account pages
+import { AccountDetailPage } from '@/features/accounts/AccountDetailPage';
+// US-010: Internal fund transfer
+import TransferPage from '@/features/transactions/pages/TransferPage';
+import TransactionHistoryPage from '@/features/transactions/pages/TransactionHistoryPage';
+import TransactionDetailPage from '@/features/transactions/pages/TransactionDetailPage';
+import AdminTransactionsPage from '@/features/transactions/pages/AdminTransactionsPage';
+import AdminTransactionDetailPage from '@/features/transactions/pages/AdminTransactionDetailPage';
+import FraudRulesPage from '@/features/fraud/pages/FraudRulesPage';
+import FraudAlertsPage from '@/features/fraud/pages/FraudAlertsPage';
+import FraudAlertDetailPage from '@/features/fraud/pages/FraudAlertDetailPage';
+import NotificationsPage from '@/features/notifications/pages/NotificationsPage';
 
 export const router = createBrowserRouter([
   {
@@ -77,5 +89,57 @@ export const router = createBrowserRouter([
     // Screen 5: Expired/invalid token error (AC6/AC7)
     path: '/reset-password/error',
     element: <ResetTokenErrorPage />,
+  },
+  // ── US-008: Account detail page ─────────────────────────────────────────────
+  {
+    // Navigated to from AccountList (US-007) when a customer taps an account card.
+    // accountId is the UUID of the BankAccount entity.
+    path: '/accounts/:accountId',
+    element: <AccountDetailPage />,
+  },
+  {
+    // US-010: Transfer funds between own active accounts.
+    path: '/transfer',
+    element: <TransferPage />,
+  },
+  {
+    // US-011: Customer transaction history.
+    path: '/transactions',
+    element: <TransactionHistoryPage />,
+  },
+  {
+    // US-012: Customer transaction details.
+    path: '/transactions/:transactionId',
+    element: <TransactionDetailPage />,
+  },
+  {
+    // US-013: Admin transaction overview.
+    path: '/admin/transactions',
+    element: <AdminTransactionsPage />,
+  },
+  {
+    // US-013: Admin transaction detail.
+    path: '/admin/transactions/:transactionId',
+    element: <AdminTransactionDetailPage />,
+  },
+  {
+    // US-014: Fraud rule management.
+    path: '/fraud/rules',
+    element: <FraudRulesPage />,
+  },
+  {
+    // US-017: Fraud alert review queue.
+    path: '/fraud/alerts',
+    element: <FraudAlertsPage />,
+  },
+  {
+    // US-017 / US-018: Fraud alert detail and resolution.
+    path: '/fraud/alerts/:alertId',
+    element: <FraudAlertDetailPage />,
+  },
+  {
+    // US-016: Customer notification inbox.
+    path: '/notifications',
+    element: <NotificationsPage />,
   },
 ]);

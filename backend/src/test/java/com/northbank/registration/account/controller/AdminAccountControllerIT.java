@@ -5,6 +5,7 @@ import com.northbank.registration.account.domain.model.AccountStatus;
 import com.northbank.registration.account.domain.model.AccountType;
 import com.northbank.registration.account.domain.model.BankAccount;
 import com.northbank.registration.account.repository.AccountRepository;
+import com.northbank.registration.config.IntegrationTestBase;
 import com.northbank.registration.customer.domain.model.Customer;
 import com.northbank.registration.customer.domain.model.CustomerRole;
 import com.northbank.registration.customer.repository.CustomerRepository;
@@ -13,12 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -41,17 +37,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * </ul>
  * </p>
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test")
-@Transactional
-class AdminAccountControllerIT {
+class AdminAccountControllerIT extends IntegrationTestBase {
 
     private static final String BASE_URL      = "/api/v1/admin/accounts";
     private static final String DEACTIVATE    = BASE_URL + "/{id}/deactivate";
     private static final String ACTIVATE      = BASE_URL + "/{id}/activate";
 
-    @Autowired MockMvc          mockMvc;
     @Autowired AccountRepository  accountRepository;
     @Autowired CustomerRepository customerRepository;
 

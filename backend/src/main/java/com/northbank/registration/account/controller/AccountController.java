@@ -6,6 +6,7 @@ import com.northbank.registration.account.service.dto.AccountDetailResponse;
 import com.northbank.registration.account.service.dto.AccountSummaryResponse;
 import com.northbank.registration.account.service.dto.OpenAccountRequest;
 import com.northbank.registration.account.service.dto.OpenAccountResponse;
+import com.northbank.registration.shared.security.AuthenticatedCustomer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -23,7 +24,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -83,9 +83,9 @@ public class AccountController {
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<OpenAccountResponse> openAccount(
             @Valid @RequestBody OpenAccountRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Object principal) {
 
-        UUID customerId = UUID.fromString(jwt.getSubject());
+        UUID customerId = AuthenticatedCustomer.resolveId(principal);
         log.debug("Open account request: type={}, customerId={}", request.type(), customerId);
 
         OpenAccountResponse response = accountService.openAccount(customerId, request);
@@ -119,9 +119,9 @@ public class AccountController {
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<AccountSummaryResponse>> listAccounts(
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Object principal) {
 
-        UUID customerId = UUID.fromString(jwt.getSubject());
+        UUID customerId = AuthenticatedCustomer.resolveId(principal);
         log.debug("List accounts request: customerId={}", customerId);
 
         return ResponseEntity.ok(accountService.listAccounts(customerId));
@@ -155,9 +155,9 @@ public class AccountController {
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AccountDetailResponse> getAccountDetail(
             @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Object principal) {
 
-        UUID customerId = UUID.fromString(jwt.getSubject());
+        UUID customerId = AuthenticatedCustomer.resolveId(principal);
         log.debug("Get account detail: id={}, customerId={}", id, customerId);
 
         return ResponseEntity.ok(accountService.getAccountDetail(customerId, id));

@@ -2,6 +2,7 @@
 package com.northbank.registration.config;
 
 import com.northbank.registration.auth.otp.exception.InvalidSessionTokenException;
+import com.northbank.registration.customer.domain.model.CustomerRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -87,11 +88,16 @@ public class JwtConfig {
      * @return compact, signed JWT string with {@code type="ACCESS"}
      */
     public String generateAccessToken(UUID customerId) {
+        return generateAccessToken(customerId, CustomerRole.CUSTOMER);
+    }
+
+    public String generateAccessToken(UUID customerId, CustomerRole role) {
         SecretKey key = buildKey();
         Instant now   = Instant.now();
         return Jwts.builder()
                 .subject(customerId.toString())
                 .claim("type", "ACCESS")
+                .claim("role", role.name())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds((long) accessTokenExpiryMinutes * 60)))
                 .signWith(key)

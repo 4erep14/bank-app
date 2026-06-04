@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -79,7 +81,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain         filterChain) throws ServletException, IOException {
 
-        // Step 1: Extract Bearer token
+        Authentication existing = SecurityContextHolder.getContext().getAuthentication();
+        if (existing != null && existing.isAuthenticated()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // ── Step 1: Extract Bearer token ─────────────────────────────────────
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             writeUnauthorized(response, request.getRequestURI(),
@@ -132,27 +140,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // Step 6: Build authorities from role claim (US-009)
-        // The role claim is stored as the enum name, e.g. "ADMIN" or "CUSTOMER".
-        // Spring Security's hasRole('ADMIN') matches against "ROLE_ADMIN", so we
-        // prefix with "ROLE_" when constructing the SimpleGrantedAuthority.
-        String roleClaim = claims.get("role", String.class);
-        CustomerRole resolvedRole;
-        try {
-            resolvedRole = (roleClaim != null)
-                    ? CustomerRole.valueOf(roleClaim)
-                    : CustomerRole.CUSTOMER;
-        } catch (IllegalArgumentException ex) {
-            log.warn("Unknown role claim '{}' in JWT for customerId={}", roleClaim, customerId);
-            resolvedRole = CustomerRole.CUSTOMER;
-        }
-        List<GrantedAuthority> authorities = List.of(
-                new SimpleGrantedAuthority("ROLE_" + resolvedRole.name())
-        );
-
         // Step 7: Populate SecurityContext with customerId + authorities
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(customerId, null, authorities);
+                new UsernamePasswordAuthenticationToken(customerId, null, resolveAuthorities(claims, customer));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
@@ -173,5 +163,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 escapedDetail, escapedInstance
         );
         response.getWriter().write(body);
+    }
+
+    private List<GrantedAuthority> resolveAuthorities(Claims claims, Customer customer) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        String roleClaim = claims.get("role", String.class);
+        CustomerRole resolvedRole = customer.getRole() == null ? CustomerRole.CUSTOMER : customer.getRole();
+        if (roleClaim != null) {
+            try {
+                resolvedRole = CustomerRole.valueOf(roleClaim);
+            } catch (IllegalArgumentException ex) {
+                log.warn("Unknown role claim '{}' in JWT for customerId={}", roleClaim, customer.getId());
+            }
+        }
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + resolvedRole.name()));
+
+        Object rolesClaim = claims.get("roles");
+        if (rolesClaim == null) {
+            rolesClaim = claims.get("authorities");
+        }
+        if (!(rolesClaim instanceof List<?> values)) {
+            return authorities;
+        }
+
+        for (Object value : values) {
+            if (value instanceof String role && !role.isBlank()) {
+                String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                authorities.add(new SimpleGrantedAuthority(authority));
+            }
+        }
+        return authorities;
     }
 }

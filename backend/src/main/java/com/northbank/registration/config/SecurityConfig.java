@@ -20,11 +20,26 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 /**
  * Spring Security configuration.
  *
- * <p>US-009 changes:</p>
+ * <p>Rules:</p>
  * <ul>
- *   <li>{@code /api/v1/admin/**} requires {@code ROLE_ADMIN} (AC6).</li>
- *   <li>All {@code /api/v1/accounts/**} endpoints require authentication.</li>
- *   <li>{@code @EnableMethodSecurity} enabled for future {@code @PreAuthorize} use.</li>
+ *   <li>{@code POST /api/v1/customers}              — public (US-001)</li>
+ *   <li>{@code POST /api/v1/auth/login}              — public (US-002)</li>
+ *   <li>{@code POST /api/v1/auth/verify-otp}         — public (US-003)</li>
+ *   <li>{@code POST /api/v1/auth/resend-otp}         — public (US-003)</li>
+ *   <li>{@code POST /api/v1/auth/forgot-password}    — public (US-004)</li>
+ *   <li>{@code POST /api/v1/auth/reset-password}     — public (US-004)</li>
+ *   <li>{@code GET  /api/v1/profile}                 — authenticated, ACCESS JWT (US-005)</li>
+ *   <li>{@code PATCH /api/v1/profile}                — authenticated, ACCESS JWT (US-005)</li>
+ *   <li>{@code /api/v1/accounts/**}                  — authenticated, ACCESS JWT (US-006/007/008)</li>
+ *   <li>{@code /api/v1/transactions/**}              — authenticated, ACCESS JWT (US-010/011/012)</li>
+ *   <li>{@code /api/v1/admin/accounts/**}            — ADMIN role required (US-009)</li>
+ *   <li>{@code /api/v1/admin/transactions/**}        — ADMIN role required (US-013)</li>
+ *   <li>{@code /api/v1/fraud/**}                     — FRAUD_ANALYST role required (US-014+)</li>
+ *   <li>{@code /api/v1/notifications/**}             — authenticated, ACCESS JWT (US-016)</li>
+ *   <li>{@code /swagger-ui/**}, {@code /api-docs/**} — public (development)</li>
+ *   <li>All other requests denied by default.</li>
+ *   <li>CSRF disabled — stateless REST API.</li>
+ *   <li>Sessions stateless — no HTTP session created.</li>
  * </ul>
  */
 @Configuration
@@ -58,14 +73,25 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,   "/api/v1/profile").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/profile").authenticated()
 
-                // ── Authenticated: Customer account endpoints ─────────────
-                .requestMatchers("/api/v1/accounts").authenticated()
+                // ── US-006 / US-007 / US-008: Accounts ────────────────────
                 .requestMatchers("/api/v1/accounts/**").authenticated()
 
-                // ── ROLE_ADMIN only: Admin endpoints (US-009, AC6) ────────
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                // ── US-009: Admin account management ──────────────────────
+                .requestMatchers("/api/v1/admin/accounts/**").hasRole("ADMIN")
 
-                // ── OpenAPI / Swagger UI ──────────────────────────────────
+                // ── US-013: Admin transaction overview ────────────────────
+                .requestMatchers("/api/v1/admin/transactions/**").hasRole("ADMIN")
+
+                // ── EPIC-004: Fraud detection analyst tools ───────────────
+                .requestMatchers("/api/v1/fraud/**").hasRole("FRAUD_ANALYST")
+
+                // ── US-016: Customer notifications ────────────────────────
+                .requestMatchers("/api/v1/notifications/**").authenticated()
+
+                // ── US-010 / US-011 / US-012: Customer transactions ───────
+                .requestMatchers("/api/v1/transactions/**").authenticated()
+
+                // ── OpenAPI / Swagger UI (development convenience) ────────
                 .requestMatchers(
                     "/swagger-ui.html",
                     "/swagger-ui/**",

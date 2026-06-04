@@ -1,5 +1,5 @@
 -- Story: US-009
--- Adds a role column to customers (CUSTOMER | ADMIN) and extends the
+-- Adds a role column to customers and extends the
 -- accounts status check constraint to include INACTIVE.
 
 -- 1. Add role column to customers (default CUSTOMER for all existing rows)
@@ -8,7 +8,7 @@ ALTER TABLE customers
 
 ALTER TABLE customers
     ADD CONSTRAINT chk_customers_role
-    CHECK (role IN ('CUSTOMER', 'ADMIN'));
+    CHECK (role IN ('CUSTOMER', 'ADMIN', 'FRAUD_ANALYST'));
 
 -- 2. Extend accounts status constraint to include INACTIVE (AC4/AC5)
 ALTER TABLE accounts
