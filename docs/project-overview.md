@@ -12,6 +12,25 @@ The project is organized around product epics and user stories. Each epic delive
 
 The system is intentionally built as a modular monolith: one Spring Boot backend and one React frontend, with package boundaries by business capability. This keeps the project understandable for a small team while preserving clear seams for future extraction if the domain grows.
 
+## Demo Data
+
+The backend seeds demo data on startup when `northbank.demo.seed-enabled=true`, which defaults to `true` through `NORTHBANK_DEMO_SEED_ENABLED`. The `test` profile disables seeding.
+
+Admin account:
+
+| Email | Password | Purpose |
+| --- | --- | --- |
+| `admin@northbank.test` | `AdminPass123!` | Bank Admin account for customer, account, transaction, and audit management |
+
+Customer accounts:
+
+| Email | Password | Status | Seeded balances |
+| --- | --- | --- | --- |
+| `maria.garcia@northbank.test` | `CustomerPass123!` | `ACTIVE` | Checking `$4,825.75`, Savings `$18,420.00` |
+| `david.chen@northbank.test` | `CustomerPass123!` | `ACTIVE` | Checking `$2,380.40`, Savings `$8,200.00` |
+| `sarah.patel@northbank.test` | `CustomerPass123!` | `LOCKED` | Frozen checking `$380.25`, Savings `$1,500.00` |
+| `leo.martin@northbank.test` | `CustomerPass123!` | `INACTIVE` | Inactive checking `$94.12` |
+
 ## Implemented Epics and User Flows
 
 ### EPIC-01: User Identity and Authentication
