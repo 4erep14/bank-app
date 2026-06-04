@@ -1,10 +1,14 @@
 # NorthBank Project Overview
 
+Last updated: 2026-06-04.
+
 ## Project Description
 
 NorthBank is a full-stack digital banking application for customer onboarding, secure login, bank account management, internal transfers, fraud detection, customer notifications, and platform administration.
 
 The system is implemented as a modular monolith: one Spring Boot backend, one React frontend, and one PostgreSQL database. Backend packages are split by business capability, and frontend code is split by feature. This keeps local development simple while preserving clear boundaries for future service extraction.
+
+The backend exposes interactive OpenAPI documentation through Swagger UI. Public operations are unauthenticated. Customer, admin, and fraud analyst operations are documented with the shared `bearerAuth` JWT scheme so Swagger UI sends the `Authorization: Bearer <token>` header after a user authorizes with an access token.
 
 Primary users:
 
@@ -15,6 +19,8 @@ Primary users:
 ## Demo Data
 
 The backend seeds demo data on startup when `northbank.demo.seed-enabled=true`, which defaults to `true` through `NORTHBANK_DEMO_SEED_ENABLED`. The `test` profile disables seeding.
+
+Seeding is idempotent. Existing customers are reused by email, and seeded accounts are skipped when the customer already has the same account type.
 
 Admin account:
 
@@ -51,7 +57,7 @@ Important backend packages:
 - `fraud`: fraud rules, fraud alerts, analyst review, and blocked-transaction resolution.
 - `notification`: customer notification inbox.
 - `audit`: audit log entity, action types, audit service, and admin audit API.
-- `config`: security, JWT filter, password encoder, and runtime configuration.
+- `config`: security, JWT filter, password encoder, OpenAPI configuration, demo seeding, and runtime configuration.
 - `shared`: reusable security and exception helpers.
 
 ## Implemented User Flows
@@ -352,6 +358,9 @@ Admin endpoints:
 - `PATCH /api/v1/admin/customers/{id}/deactivate`
 - `PATCH /api/v1/admin/customers/{id}/unlock`
 - `GET /api/v1/admin/audit-logs`
+- `PUT /api/v1/admin/audit-logs` -> 405
+- `PATCH /api/v1/admin/audit-logs` -> 405
+- `DELETE /api/v1/admin/audit-logs` -> 405
 
 Fraud analyst endpoints:
 
@@ -368,6 +377,13 @@ Documentation endpoints:
 
 - `GET /swagger-ui.html`
 - `GET /api-docs`
+
+Swagger/OpenAPI decisions:
+
+- `OpenApiConfig` defines one HTTP bearer JWT scheme named `bearerAuth`.
+- Protected controllers and operations use `@SecurityRequirement(name = "bearerAuth")`.
+- Admin accounts, admin customers, admin transactions, admin audit logs, fraud rules, fraud alerts, profile, accounts, transactions, notifications, and other protected surfaces are meant to be exercised from Swagger UI after authorizing with an access token.
+- Spring Security still enforces access at runtime; OpenAPI annotations only describe and enable the correct Swagger UI request headers.
 
 ## Technologies Used
 
@@ -388,6 +404,7 @@ Backend:
 - MapStruct 1.6.2
 - springdoc-openapi 2.6.0
 - ProblemDetail / RFC 7807-style error responses
+- Spring Actuator health endpoint for container health checks
 
 Frontend:
 
@@ -410,6 +427,7 @@ Database and runtime:
 - Docker Compose
 - Multi-stage Docker builds
 - Nginx SPA fallback and `/api/*` proxy
+- Environment-driven runtime configuration
 
 Testing:
 
@@ -420,6 +438,13 @@ Testing:
 - Testcontainers PostgreSQL
 - AssertJ and Mockito
 - TypeScript compiler checks
+
+Documentation and delivery tools:
+
+- Swagger UI and generated OpenAPI JSON for API exploration.
+- Flyway SQL migrations for database evolution.
+- Docker Compose for local full-stack orchestration.
+- GitHub `master` branch as the current delivery target.
 
 ## Backend Architecture
 
@@ -452,6 +477,7 @@ Authorization rules:
 - Fraud analyst APIs require `ROLE_FRAUD_ANALYST`.
 - Unknown endpoints are denied by default.
 - CSRF is disabled and sessions are stateless.
+- OpenAPI documentation mirrors secured endpoints with `bearerAuth`, including admin-only controllers, so Swagger-authorized calls behave like frontend calls.
 
 ### Persistence Architecture
 
@@ -466,6 +492,7 @@ Flyway migrations:
 - `V7`: fraud rules, fraud alerts, notifications
 - `V8`: customer roles and inactive account status
 - `V9`: platform administration and audit logs
+- `V10`: token string column type fix for OTP, refresh, and password reset token storage
 
 Important tables:
 
@@ -480,7 +507,7 @@ Important tables:
 - `notifications`
 - `audit_logs`
 
-Hibernate uses `ddl-auto=validate`, so Flyway owns schema changes. Database constraints protect uniqueness, valid statuses, positive amounts, different transfer accounts, and foreign-key relationships.
+Hibernate uses `ddl-auto=validate`, so Flyway owns schema changes. Database constraints protect uniqueness, valid statuses, positive amounts, different transfer accounts, foreign-key relationships, and token column storage that can safely hold hashed token values.
 
 ### Domain Model Summary
 
@@ -604,6 +631,7 @@ Runtime decisions:
 - OTP and reset tokens are hash-stored.
 - `password_changed_at` invalidates old access tokens after password reset or admin deactivation.
 - Role-based authorization is enforced by Spring Security.
+- Swagger/OpenAPI security annotations must stay aligned with Spring Security so interactive documentation can call secured endpoints correctly.
 - Admin, fraud analyst, and customer APIs are separated.
 - Pessimistic account locking protects transfer consistency.
 - Fraud evaluation uses a port so detection logic can evolve independently.
