@@ -51,11 +51,11 @@ public class OtpSession {
     private UUID customerId;
 
     /** SHA-256 hex digest of the raw SESSION JWT — 64 hex chars. */
-    @Column(name = "session_token_hash", nullable = false, length = 64, columnDefinition = "CHAR(64)")
+    @Column(name = "session_token_hash", nullable = false, length = 64)
     private String sessionTokenHash;
 
     /** 6-digit zero-padded OTP code. Never returned in any API response. */
-    @Column(name = "otp_code", nullable = false, length = 6, columnDefinition = "CHAR(6)")
+    @Column(name = "otp_code", nullable = false, length = 6)
     private String otpCode;
 
     /** When this OTP expires. Default: 5 minutes from creation. */

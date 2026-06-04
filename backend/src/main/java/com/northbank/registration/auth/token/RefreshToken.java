@@ -41,7 +41,7 @@ public class RefreshToken {
     private UUID customerId;
 
     /** SHA-256 hex digest of the raw opaque refresh token — 64 hex chars. */
-    @Column(name = "token_hash", nullable = false, length = 64, columnDefinition = "CHAR(64)")
+    @Column(name = "token_hash", nullable = false, length = 64)
     private String tokenHash;
 
     /** When this refresh token expires (default: 7 days from issue). */

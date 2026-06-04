@@ -1,9 +1,0 @@
-com\northbank\registration\auth\TwoFactorAuthIntegrationTest.class
-com\northbank\registration\auth\PasswordResetIntegrationTest.class
-com\northbank\registration\profile\ProfileServiceTest$UpdateProfile.class
-com\northbank\registration\profile\ProfileServiceTest.class
-com\northbank\registration\profile\ProfileServiceTest$GetProfile.class
-com\northbank\registration\auth\otp\OtpServiceTest.class
-com\northbank\registration\profile\CustomerProfileIntegrationTest.class
-com\northbank\registration\auth\CustomerLoginIntegrationTest.class
-com\northbank\registration\auth\login\AuthServiceTest.class
