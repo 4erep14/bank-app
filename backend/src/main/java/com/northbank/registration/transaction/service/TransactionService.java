@@ -4,6 +4,8 @@ package com.northbank.registration.transaction.service;
 import com.northbank.registration.account.domain.model.AccountStatus;
 import com.northbank.registration.account.domain.model.BankAccount;
 import com.northbank.registration.account.repository.AccountRepository;
+import com.northbank.registration.audit.domain.model.AuditActionType;
+import com.northbank.registration.audit.service.AuditLogService;
 import com.northbank.registration.transaction.domain.event.FraudEvaluationRequestedEvent;
 import com.northbank.registration.transaction.domain.model.Transaction;
 import com.northbank.registration.transaction.domain.model.TransactionStatus;
@@ -45,6 +47,7 @@ public class TransactionService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final FraudEvaluationPort fraudEvaluationPort;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public Page<TransactionSummaryResponse> listCustomerTransactions(UUID customerId, TransactionFilter filter, Pageable pageable) {
@@ -123,6 +126,7 @@ public class TransactionService {
                 .description(normalizeDescription(request.description()))
                 .timestamp(timestamp)
                 .build());
+        auditLogService.record(AuditActionType.TRANSFER_SUBMITTED, "TRANSACTION", transaction.getId());
 
         FraudEvaluationResult fraudResult = fraudEvaluationPort.evaluate(new FraudEvaluationRequestedEvent(
                 transaction.getId(),
@@ -136,6 +140,7 @@ public class TransactionService {
         if (fraudResult.blocked()) {
             transaction.setStatus(TransactionStatus.BLOCKED);
             Transaction saved = transactionRepository.save(transaction);
+            auditLogService.record(AuditActionType.TRANSFER_BLOCKED, "TRANSACTION", saved.getId());
             log.info("Transfer blocked: transactionId={}, customerId={}", saved.getId(), customerId);
             return new TransferResponse(saved.getId(), saved.getStatus());
         }
@@ -145,6 +150,7 @@ public class TransactionService {
         transaction.setStatus(TransactionStatus.COMPLETED);
 
         Transaction saved = transactionRepository.save(transaction);
+        auditLogService.record(AuditActionType.TRANSFER_COMPLETED, "TRANSACTION", saved.getId());
         log.info("Transfer completed: transactionId={}, customerId={}, amount={}",
                 saved.getId(), customerId, amount);
         return new TransferResponse(saved.getId(), saved.getStatus());

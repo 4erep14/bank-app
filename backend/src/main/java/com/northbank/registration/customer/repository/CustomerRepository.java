@@ -3,6 +3,7 @@ package com.northbank.registration.customer.repository;
 
 import com.northbank.registration.customer.domain.model.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -12,7 +13,7 @@ import java.util.UUID;
  * Spring Data JPA repository for {@link Customer} aggregate.
  */
 @Repository
-public interface CustomerRepository extends JpaRepository<Customer, UUID> {
+public interface CustomerRepository extends JpaRepository<Customer, UUID>, JpaSpecificationExecutor<Customer> {
 
     /**
      * Existence check used by {@code CustomerService} before persisting a new

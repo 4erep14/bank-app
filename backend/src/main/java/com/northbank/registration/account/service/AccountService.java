@@ -10,6 +10,8 @@ import com.northbank.registration.account.service.dto.AccountDetailResponse;
 import com.northbank.registration.account.service.dto.AccountSummaryResponse;
 import com.northbank.registration.account.service.dto.OpenAccountRequest;
 import com.northbank.registration.account.service.dto.OpenAccountResponse;
+import com.northbank.registration.audit.domain.model.AuditActionType;
+import com.northbank.registration.audit.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,7 @@ public class AccountService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final AccountRepository accountRepository;
+    private final AuditLogService auditLogService;
 
     // ── US-006 ───────────────────────────────────────────────────────────────
 
@@ -68,6 +71,7 @@ public class AccountService {
                 .build();
 
         BankAccount saved = accountRepository.save(account);
+        auditLogService.record(AuditActionType.ACCOUNT_OPENED, "ACCOUNT", saved.getId());
         log.info("Account opened: id={}, type={}, customer={}", saved.getId(), saved.getType(), customerId);
 
         return toResponse(saved);

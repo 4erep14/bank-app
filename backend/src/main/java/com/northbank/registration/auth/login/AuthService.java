@@ -6,6 +6,8 @@ import com.northbank.registration.auth.login.dto.LoginResponse;
 import com.northbank.registration.auth.login.exception.AccountLockedException;
 import com.northbank.registration.auth.login.exception.InvalidCredentialsException;
 import com.northbank.registration.auth.otp.OtpService;
+import com.northbank.registration.audit.domain.model.AuditActionType;
+import com.northbank.registration.audit.service.AuditLogService;
 import com.northbank.registration.config.JwtConfig;
 import com.northbank.registration.customer.domain.model.Customer;
 import com.northbank.registration.customer.domain.model.CustomerStatus;
@@ -56,6 +58,7 @@ public class AuthService {
     private final CustomerRepository customerRepository;
     private final PasswordEncoder     passwordEncoder;
     private final JwtConfig           jwtConfig;
+    private final AuditLogService     auditLogService;
 
     /**
      * OtpService wired at construction time.
@@ -99,6 +102,12 @@ public class AuthService {
 
             // US-003 additive: create OTP session and fire SMS stub
             otpService.createOtpSession(customer.getId(), sessionToken);
+            auditLogService.record(
+                    AuditActionType.LOGIN_SUCCESS,
+                    customer.getId(),
+                    customer.getRole().name(),
+                    "CUSTOMER",
+                    customer.getId());
 
             log.info("Login step-1 success for customer id={}", customer.getId());
             return new LoginResponse(SESSION_STATUS, sessionToken);
@@ -113,6 +122,12 @@ public class AuthService {
                 customer.setStatus(CustomerStatus.LOCKED);
                 customer.setLockedAt(OffsetDateTime.now());
                 customerRepository.save(customer);
+                auditLogService.record(
+                        AuditActionType.LOGIN_FAILURE,
+                        customer.getId(),
+                        customer.getRole().name(),
+                        "CUSTOMER",
+                        customer.getId());
                 log.warn("Account id={} LOCKED after {} consecutive failed login attempts",
                         customer.getId(), attempts);
                 throw new AccountLockedException();
@@ -120,6 +135,12 @@ public class AuthService {
 
             // Below threshold → persist incremented counter and return 401 (AC3)
             customerRepository.save(customer);
+            auditLogService.record(
+                    AuditActionType.LOGIN_FAILURE,
+                    customer.getId(),
+                    customer.getRole().name(),
+                    "CUSTOMER",
+                    customer.getId());
             log.warn("Failed login attempt {}/{} for customer id={}",
                     attempts, MAX_FAILED_ATTEMPTS, customer.getId());
             throw new InvalidCredentialsException();

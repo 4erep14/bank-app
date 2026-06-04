@@ -1,4 +1,4 @@
-// Story: US-001 | US-002 | US-003 | US-004 | US-005 | US-006 | US-007 | US-008 | US-010 | US-011 | US-012 | US-013
+// Story: US-001 | US-002 | US-003 | US-004 | US-005 | US-006 | US-007 | US-008 | US-010 | US-011 | US-012 | US-013 | US-019 | US-020
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RegistrationPage from '@/features/registration/pages/RegistrationPage';
 import RegistrationSuccess from '@/features/registration/components/RegistrationSuccess';
@@ -20,6 +20,9 @@ import TransactionHistoryPage from '@/features/transactions/pages/TransactionHis
 import TransactionDetailPage from '@/features/transactions/pages/TransactionDetailPage';
 import AdminTransactionsPage from '@/features/transactions/pages/AdminTransactionsPage';
 import AdminTransactionDetailPage from '@/features/transactions/pages/AdminTransactionDetailPage';
+import AdminCustomersPage from '@/features/admin/pages/AdminCustomersPage';
+import AdminAuditLogsPage from '@/features/admin/pages/AdminAuditLogsPage';
+import { AdminAccountsPage } from '@/features/admin/AdminAccountsPage';
 import FraudRulesPage from '@/features/fraud/pages/FraudRulesPage';
 import FraudAlertsPage from '@/features/fraud/pages/FraudAlertsPage';
 import FraudAlertDetailPage from '@/features/fraud/pages/FraudAlertDetailPage';
@@ -113,6 +116,11 @@ export const router = createBrowserRouter([
     element: <TransactionDetailPage />,
   },
   {
+    // US-009: Admin customer account overview.
+    path: '/admin/accounts',
+    element: <AdminAccountsPage />,
+  },
+  {
     // US-013: Admin transaction overview.
     path: '/admin/transactions',
     element: <AdminTransactionsPage />,
@@ -121,6 +129,16 @@ export const router = createBrowserRouter([
     // US-013: Admin transaction detail.
     path: '/admin/transactions/:transactionId',
     element: <AdminTransactionDetailPage />,
+  },
+  {
+    // US-019: Admin customer account management.
+    path: '/admin/customers',
+    element: <AdminCustomersPage />,
+  },
+  {
+    // US-020: Admin audit log.
+    path: '/admin/audit-logs',
+    element: <AdminAuditLogsPage />,
   },
   {
     // US-014: Fraud rule management.
