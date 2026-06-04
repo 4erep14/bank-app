@@ -1,6 +1,7 @@
 // Story: US-007
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { getAccounts } from '@/api/accounts';
 import { OpenAccountModal } from './OpenAccountModal';
 import type { AccountSummaryItem } from '@/types/account';
@@ -14,6 +15,7 @@ const STATUS_CLASSES: Record<string, string> = {
   ACTIVE: 'badge badge--active',
   CLOSED: 'badge badge--closed',
   FROZEN: 'badge badge--frozen',
+  INACTIVE: 'badge badge--inactive',
 };
 
 /**
@@ -152,22 +154,24 @@ function AccountCard({ account }: { account: AccountSummaryItem }) {
 
   return (
     <li className="account-card">
-      <div className="account-card__header">
-        <span className="account-card__type">
-          {TYPE_LABEL[account.type] ?? account.type}
-        </span>
-        <span className={STATUS_CLASSES[account.status] ?? 'badge'}>
-          {account.status.charAt(0) + account.status.slice(1).toLowerCase()}
-        </span>
-      </div>
+      <Link to={`/accounts/${account.id}`} className="account-card__link">
+        <div className="account-card__header">
+          <span className="account-card__type">
+            {TYPE_LABEL[account.type] ?? account.type}
+          </span>
+          <span className={STATUS_CLASSES[account.status] ?? 'badge'}>
+            {account.status.charAt(0) + account.status.slice(1).toLowerCase()}
+          </span>
+        </div>
 
-      <p className="account-card__number" aria-label="Account number (last 4 digits shown)">
-        &bull;&bull;&bull;&bull; {account.accountNumber.slice(-4)}
-      </p>
+        <p className="account-card__number" aria-label="Account number (last 4 digits shown)">
+          &bull;&bull;&bull;&bull; {account.accountNumber.slice(-4)}
+        </p>
 
-      <p className="account-card__balance" aria-label="Current balance">
-        {formattedBalance}
-      </p>
+        <p className="account-card__balance" aria-label="Current balance">
+          {formattedBalance}
+        </p>
+      </Link>
     </li>
   );
 }

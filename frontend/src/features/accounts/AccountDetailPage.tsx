@@ -15,14 +15,14 @@ import type { AccountDetailResponse } from '@/types/account';
  *   - 200     → account detail card
  */
 export function AccountDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { accountId } = useParams<{ accountId: string }>();
   const navigate = useNavigate();
 
   const { data, isLoading, isError, error } = useQuery<AccountDetailResponse, ApiError>({
-    queryKey: ['account', id],
-    queryFn: () => getAccountDetail(id!),
+    queryKey: ['account', accountId],
+    queryFn: () => getAccountDetail(accountId!),
     retry: false,
-    enabled: !!id,
+    enabled: !!accountId,
   });
 
   if (isLoading) return <AccountDetailSkeleton />;
@@ -33,27 +33,24 @@ export function AccountDetailPage() {
       <div className="empty-state">
         {status === 403 && (
           <>
-            <span className="empty-state-icon" aria-hidden>🔒</span>
             <h3>Access Denied</h3>
             <p>You don&apos;t have permission to view this account.</p>
           </>
         )}
         {status === 404 && (
           <>
-            <span className="empty-state-icon" aria-hidden>🔍</span>
             <h3>Account Not Found</h3>
             <p>This account doesn&apos;t exist or may have been removed.</p>
           </>
         )}
         {status !== 403 && status !== 404 && (
           <>
-            <span className="empty-state-icon" aria-hidden>⚠️</span>
             <h3>Something went wrong</h3>
             <p>Unable to load account details. Please try again.</p>
           </>
         )}
-        <button className="btn btn-ghost" onClick={() => navigate('/accounts')}>
-          ← Back to Accounts
+        <button className="btn btn-ghost" onClick={() => navigate('/dashboard')}>
+          Back to dashboard
         </button>
       </div>
     );
@@ -74,10 +71,10 @@ export function AccountDetailPage() {
     <main className="page-content">
       <button
         className="btn btn-ghost back-btn"
-        onClick={() => navigate('/accounts')}
+        onClick={() => navigate('/dashboard')}
         aria-label="Back to accounts list"
       >
-        ← Accounts
+        Accounts
       </button>
 
       <div className="account-detail-card" role="region" aria-label="Account details">
