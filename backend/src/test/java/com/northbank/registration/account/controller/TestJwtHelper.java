@@ -18,14 +18,25 @@ final class TestJwtHelper {
     }
 
     static String generateToken(UUID customerId) {
+        return generateToken(customerId, null);
+    }
+
+    static String generateAdminToken(UUID customerId) {
+        return generateToken(customerId, "ADMIN");
+    }
+
+    private static String generateToken(UUID customerId, String role) {
         SecretKey key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
         Instant now = Instant.now();
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(customerId.toString())
                 .claim("type", "ACCESS")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(900)))
-                .signWith(key)
-                .compact();
+                .signWith(key);
+        if (role != null) {
+            builder.claim("role", role);
+        }
+        return builder.compact();
     }
 }

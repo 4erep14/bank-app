@@ -162,8 +162,12 @@ public class OtpService {
             throw new InvalidOtpException(remaining);
         }
 
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Customer not found after OTP validation — id=" + customerId));
+
         // Step 6 — Valid OTP: generate access token + refresh token, consume session
-        String accessToken   = jwtConfig.generateAccessToken(customerId);
+        String accessToken   = jwtConfig.generateAccessToken(customerId, customer.getRole());
         String rawRefresh    = generateOpaqueToken();
         String refreshHash   = sha256Hex(rawRefresh);
 

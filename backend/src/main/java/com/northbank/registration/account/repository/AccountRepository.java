@@ -1,10 +1,11 @@
-// Story: US-006 | US-007
+// Story: US-006 / US-007 / US-009
 package com.northbank.registration.account.repository;
 
 import com.northbank.registration.account.domain.model.AccountType;
 import com.northbank.registration.account.domain.model.BankAccount;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -13,31 +14,23 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Data access for {@link BankAccount} entities.
+ *
+ * <p>US-009 adds {@link JpaSpecificationExecutor} to support dynamic filter
+ * queries in {@code AdminAccountService}.</p>
+ */
 @Repository
-public interface AccountRepository extends JpaRepository<BankAccount, UUID> {
+public interface AccountRepository
+        extends JpaRepository<BankAccount, UUID>, JpaSpecificationExecutor<BankAccount> {
 
-    // ── US-006 ────────────────────────────────────────────────────────────────
-
-    /**
-     * Returns true if the customer already owns an account of the given type.
-     * Used for AC5: one CHECKING + one SAVINGS maximum per customer.
-     */
+    /** US-006: Guard against duplicate account type per customer. */
     boolean existsByCustomerIdAndType(UUID customerId, AccountType type);
 
-    /**
-     * Returns true if the given account number is already taken.
-     * Used during unique account number generation to prevent collisions.
-     */
+    /** US-006: Guard against duplicate account number. */
     boolean existsByAccountNumber(String accountNumber);
 
-    // ── US-007 ────────────────────────────────────────────────────────────────
-
-    /**
-     * Returns all accounts owned by the given customer, newest first.
-     *
-     * <p>AC3: Only accounts for {@code customerId} are returned.
-     * AC4: Returns an empty list when the customer has no accounts.</p>
-     */
+    /** US-007: All accounts for a customer, newest first. */
     List<BankAccount> findAllByCustomerIdOrderByCreatedAtDesc(UUID customerId);
 
     // ── US-010 ────────────────────────────────────────────────────────────────
