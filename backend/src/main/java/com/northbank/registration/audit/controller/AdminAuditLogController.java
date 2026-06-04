@@ -5,6 +5,7 @@ import com.northbank.registration.audit.domain.model.AuditActionType;
 import com.northbank.registration.audit.service.AuditLogService;
 import com.northbank.registration.audit.service.dto.AuditLogFilter;
 import com.northbank.registration.audit.service.dto.AuditLogResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/admin/audit-logs")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminAuditLogController {
 

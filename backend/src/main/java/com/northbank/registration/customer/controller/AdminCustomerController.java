@@ -4,6 +4,7 @@ package com.northbank.registration.customer.controller;
 import com.northbank.registration.customer.domain.model.CustomerStatus;
 import com.northbank.registration.customer.service.AdminCustomerService;
 import com.northbank.registration.customer.service.dto.AdminCustomerSummaryResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/admin/customers")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminCustomerController {
 
