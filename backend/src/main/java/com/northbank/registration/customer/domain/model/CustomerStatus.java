@@ -9,6 +9,7 @@ package com.northbank.registration.customer.domain.model;
  *   <li>{@code SUSPENDED} — administratively suspended.</li>
  *   <li>{@code CLOSED} — permanently closed.</li>
  *   <li>{@code LOCKED} — locked after 5 consecutive failed login attempts (US-002, AC4/AC5).</li>
+ *   <li>{@code INACTIVE} — deactivated by a Bank Admin (US-019).</li>
  * </ul>
  */
 public enum CustomerStatus {
@@ -29,5 +30,8 @@ public enum CustomerStatus {
      * Account locked due to 5 consecutive failed login attempts (US-002 AC4).
      * Can only be unlocked by a Bank Admin (US-002 AC5).
      */
-    LOCKED
+    LOCKED,
+
+    /** Administratively deactivated. Active JWT sessions are rejected. */
+    INACTIVE
 }

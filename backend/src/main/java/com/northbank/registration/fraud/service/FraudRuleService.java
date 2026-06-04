@@ -12,6 +12,8 @@ import com.northbank.registration.fraud.repository.FraudRuleRepository;
 import com.northbank.registration.fraud.service.dto.CreateFraudRuleRequest;
 import com.northbank.registration.fraud.service.dto.FraudRuleResponse;
 import com.northbank.registration.fraud.service.dto.UpdateFraudRuleRequest;
+import com.northbank.registration.audit.domain.model.AuditActionType;
+import com.northbank.registration.audit.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,7 @@ import java.util.UUID;
 public class FraudRuleService {
 
     private final FraudRuleRepository fraudRuleRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public FraudRuleResponse create(CreateFraudRuleRequest request) {
@@ -43,6 +46,7 @@ public class FraudRuleService {
                 .active(request.active())
                 .status(FraudRuleStatus.ACTIVE)
                 .build());
+        auditLogService.record(AuditActionType.FRAUD_RULE_CREATED, "FRAUD_RULE", rule.getId());
         return toResponse(rule);
     }
 
@@ -72,7 +76,9 @@ public class FraudRuleService {
         if (request.active() != null) {
             rule.setActive(request.active());
         }
-        return toResponse(fraudRuleRepository.save(rule));
+        FraudRule saved = fraudRuleRepository.save(rule);
+        auditLogService.record(AuditActionType.FRAUD_RULE_UPDATED, "FRAUD_RULE", saved.getId());
+        return toResponse(saved);
     }
 
     @Transactional
@@ -88,6 +94,7 @@ public class FraudRuleService {
         rule.setActive(false);
         rule.setStatus(FraudRuleStatus.DELETED);
         fraudRuleRepository.save(rule);
+        auditLogService.record(AuditActionType.FRAUD_RULE_DELETED, "FRAUD_RULE", rule.getId());
     }
 
     private String normalizeName(String name) {

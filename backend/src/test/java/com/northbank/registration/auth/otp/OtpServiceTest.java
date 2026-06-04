@@ -140,7 +140,8 @@ class OtpServiceTest {
     @DisplayName("AC3 — verifyOtp with correct OTP returns accessToken and refreshToken")
     void ac3_verifyOtp_validOtp_returnsTokenPair() {
         given(jwtConfig.validateSessionToken(RAW_SESSION)).willReturn(CUSTOMER_ID);
-        given(jwtConfig.generateAccessToken(CUSTOMER_ID)).willReturn("access.token.value");
+        given(customerRepository.findById(CUSTOMER_ID)).willReturn(Optional.of(customer));
+        given(jwtConfig.generateAccessToken(CUSTOMER_ID, customer.getRole())).willReturn("access.token.value");
         OtpSession session = buildSession(VALID_OTP, OffsetDateTime.now().plusMinutes(5), 0, false);
         given(otpSessionRepository.findBySessionTokenHash(anyString())).willReturn(Optional.of(session));
         given(refreshTokenRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
@@ -156,7 +157,8 @@ class OtpServiceTest {
     @DisplayName("AC3 — verifyOtp marks session invalidated after success (replay prevention)")
     void ac3_verifyOtp_validOtp_marksSessionInvalidated() {
         given(jwtConfig.validateSessionToken(RAW_SESSION)).willReturn(CUSTOMER_ID);
-        given(jwtConfig.generateAccessToken(CUSTOMER_ID)).willReturn("token");
+        given(customerRepository.findById(CUSTOMER_ID)).willReturn(Optional.of(customer));
+        given(jwtConfig.generateAccessToken(CUSTOMER_ID, customer.getRole())).willReturn("token");
         OtpSession session = buildSession(VALID_OTP, OffsetDateTime.now().plusMinutes(5), 0, false);
         given(otpSessionRepository.findBySessionTokenHash(anyString())).willReturn(Optional.of(session));
         given(refreshTokenRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
@@ -171,7 +173,8 @@ class OtpServiceTest {
     @DisplayName("AC3 — verifyOtp persists a refresh token row")
     void ac3_verifyOtp_persistsRefreshToken() {
         given(jwtConfig.validateSessionToken(RAW_SESSION)).willReturn(CUSTOMER_ID);
-        given(jwtConfig.generateAccessToken(CUSTOMER_ID)).willReturn("token");
+        given(customerRepository.findById(CUSTOMER_ID)).willReturn(Optional.of(customer));
+        given(jwtConfig.generateAccessToken(CUSTOMER_ID, customer.getRole())).willReturn("token");
         OtpSession session = buildSession(VALID_OTP, OffsetDateTime.now().plusMinutes(5), 0, false);
         given(otpSessionRepository.findBySessionTokenHash(anyString())).willReturn(Optional.of(session));
         given(refreshTokenRepository.save(any())).willAnswer(inv -> inv.getArgument(0));

@@ -10,19 +10,23 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
-final class TestJwtHelper {
+public final class TestJwtHelper {
 
     private static final String SECRET = "northbank-test-jwt-secret-us002!!!";
 
     private TestJwtHelper() {
     }
 
-    static String generateToken(UUID customerId) {
+    public static String generateToken(UUID customerId) {
         return generateToken(customerId, null);
     }
 
-    static String generateAdminToken(UUID customerId) {
+    public static String generateAdminToken(UUID customerId) {
         return generateToken(customerId, "ADMIN");
+    }
+
+    public static String generateFraudAnalystToken(UUID customerId) {
+        return generateToken(customerId, "FRAUD_ANALYST");
     }
 
     private static String generateToken(UUID customerId, String role) {

@@ -35,6 +35,7 @@ public interface CustomerMapper {
     @Mapping(target = "createdAt",            ignore = true)
     @Mapping(target = "updatedAt",            ignore = true)
     @Mapping(target = "status",               ignore = true)   // set by @Builder.Default = PENDING_VERIFICATION
+    @Mapping(target = "role",                 ignore = true)   // set by @Builder.Default = CUSTOMER
     @Mapping(target = "failedLoginAttempts",  ignore = true)   // US-002: managed by AuthService
     @Mapping(target = "lockedAt",             ignore = true)   // US-002: managed by AuthService
     @Mapping(target = "passwordChangedAt",    ignore = true)   // US-002/004: managed by PasswordResetService

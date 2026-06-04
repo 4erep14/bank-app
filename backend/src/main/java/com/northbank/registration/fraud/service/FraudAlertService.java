@@ -3,6 +3,8 @@ package com.northbank.registration.fraud.service;
 
 import com.northbank.registration.account.domain.model.BankAccount;
 import com.northbank.registration.account.repository.AccountRepository;
+import com.northbank.registration.audit.domain.model.AuditActionType;
+import com.northbank.registration.audit.service.AuditLogService;
 import com.northbank.registration.customer.domain.model.Customer;
 import com.northbank.registration.customer.repository.CustomerRepository;
 import com.northbank.registration.fraud.domain.model.FraudAlert;
@@ -42,6 +44,7 @@ public class FraudAlertService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final CustomerRepository customerRepository;
+    private final AuditLogService auditLogService;
 
     @Transactional(readOnly = true)
     public Page<FraudAlertSummaryResponse> list(FraudAlertFilter filter, Pageable pageable) {
@@ -92,6 +95,7 @@ public class FraudAlertService {
         destination.setBalance(destination.getBalance().add(transaction.getAmount()));
         transaction.setStatus(TransactionStatus.COMPLETED);
         markReviewed(alert, analystId);
+        auditLogService.record(AuditActionType.TRANSACTION_UNBLOCKED, "TRANSACTION", transaction.getId());
 
         return get(alert.getId());
     }
@@ -106,6 +110,7 @@ public class FraudAlertService {
 
         transaction.setStatus(TransactionStatus.REJECTED);
         markReviewed(alert, analystId);
+        auditLogService.record(AuditActionType.TRANSACTION_REJECTED, "TRANSACTION", transaction.getId());
 
         return get(alert.getId());
     }

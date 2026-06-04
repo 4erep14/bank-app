@@ -33,6 +33,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *   <li>{@code /api/v1/accounts/**}                  — authenticated, ACCESS JWT (US-006/007/008)</li>
  *   <li>{@code /api/v1/transactions/**}              — authenticated, ACCESS JWT (US-010/011/012)</li>
  *   <li>{@code /api/v1/admin/accounts/**}            — ADMIN role required (US-009)</li>
+ *   <li>{@code /api/v1/admin/customers/**}           — ADMIN role required (US-019)</li>
+ *   <li>{@code /api/v1/admin/audit-logs/**}          — ADMIN role required (US-020)</li>
  *   <li>{@code /api/v1/admin/transactions/**}        — ADMIN role required (US-013)</li>
  *   <li>{@code /api/v1/fraud/**}                     — FRAUD_ANALYST role required (US-014+)</li>
  *   <li>{@code /api/v1/notifications/**}             — authenticated, ACCESS JWT (US-016)</li>
@@ -78,6 +80,10 @@ public class SecurityConfig {
 
                 // ── US-009: Admin account management ──────────────────────
                 .requestMatchers("/api/v1/admin/accounts/**").hasRole("ADMIN")
+
+                // ── EPIC-005: Platform administration ─────────────────────
+                .requestMatchers("/api/v1/admin/customers/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/admin/audit-logs/**").hasRole("ADMIN")
 
                 // ── US-013: Admin transaction overview ────────────────────
                 .requestMatchers("/api/v1/admin/transactions/**").hasRole("ADMIN")

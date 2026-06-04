@@ -6,6 +6,7 @@ import com.northbank.registration.auth.login.dto.LoginResponse;
 import com.northbank.registration.auth.login.exception.AccountLockedException;
 import com.northbank.registration.auth.login.exception.InvalidCredentialsException;
 import com.northbank.registration.auth.otp.OtpService;
+import com.northbank.registration.audit.service.AuditLogService;
 import com.northbank.registration.config.JwtConfig;
 import com.northbank.registration.customer.domain.model.Customer;
 import com.northbank.registration.customer.domain.model.CustomerStatus;
@@ -60,6 +61,9 @@ class AuthServiceTest {
      */
     @Mock
     private OtpService otpService;
+
+    @Mock
+    private AuditLogService auditLogService;
 
     @InjectMocks
     private AuthService authService;

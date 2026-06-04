@@ -3,6 +3,7 @@ package com.northbank.registration.config;
 
 import com.northbank.registration.customer.domain.model.Customer;
 import com.northbank.registration.customer.domain.model.CustomerRole;
+import com.northbank.registration.customer.domain.model.CustomerStatus;
 import com.northbank.registration.customer.repository.CustomerRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -124,6 +125,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.warn("Customer not found for JWT sub={} at URI={}", customerId, request.getRequestURI());
             writeUnauthorized(response, request.getRequestURI(),
                     "Authentication required. Please provide a valid access token.");
+            return;
+        }
+
+        if (customer.getStatus() == CustomerStatus.INACTIVE) {
+            log.warn("Inactive customer attempted authenticated request: customerId={}, URI={}",
+                    customerId, request.getRequestURI());
+            writeUnauthorized(response, request.getRequestURI(),
+                    "Session invalidated. Please sign in again.");
             return;
         }
 

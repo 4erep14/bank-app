@@ -7,6 +7,8 @@ import com.northbank.registration.account.domain.model.BankAccount;
 import com.northbank.registration.account.exception.AccountNotFoundException;
 import com.northbank.registration.account.repository.AccountRepository;
 import com.northbank.registration.account.service.dto.AdminAccountSummaryResponse;
+import com.northbank.registration.audit.domain.model.AuditActionType;
+import com.northbank.registration.audit.service.AuditLogService;
 import com.northbank.registration.customer.domain.model.Customer;
 import com.northbank.registration.customer.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class AdminAccountService {
 
     private final AccountRepository  accountRepository;
     private final CustomerRepository customerRepository;
+    private final AuditLogService auditLogService;
 
     // ── AC1 + AC3: Paginated list with optional filters ──────────────────────
 
@@ -109,6 +112,7 @@ public class AdminAccountService {
         log.info("Admin deactivating accountId={}", accountId);
         account.setStatus(AccountStatus.INACTIVE);
         BankAccount saved = accountRepository.save(account);
+        auditLogService.record(AuditActionType.ACCOUNT_DEACTIVATED, "ACCOUNT", saved.getId());
 
         Customer owner = customerRepository.findById(saved.getCustomerId()).orElse(null);
         return toAdminSummaryDirect(saved, owner);
@@ -134,6 +138,7 @@ public class AdminAccountService {
         log.info("Admin activating accountId={}", accountId);
         account.setStatus(AccountStatus.ACTIVE);
         BankAccount saved = accountRepository.save(account);
+        auditLogService.record(AuditActionType.ACCOUNT_ACTIVATED, "ACCOUNT", saved.getId());
 
         Customer owner = customerRepository.findById(saved.getCustomerId()).orElse(null);
         return toAdminSummaryDirect(saved, owner);

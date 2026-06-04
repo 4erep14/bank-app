@@ -1,5 +1,6 @@
 // Story: US-009
 import type { AdminAccountSummary, AccountType, AccountStatus } from '@/types/account';
+import { ACCESS_TOKEN_KEY } from '@/features/auth/types/auth.types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
@@ -22,7 +23,7 @@ interface ListParams {
 }
 
 async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
-  const token = sessionStorage.getItem('access_token');
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
   return fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
