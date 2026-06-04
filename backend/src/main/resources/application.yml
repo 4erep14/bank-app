@@ -69,3 +69,7 @@ security:
     secret: ${SECURITY_JWT_SECRET}
     session-token-expiry-minutes: 5
     access-token-expiry-minutes: 15
+
+northbank:
+  demo:
+    seed-enabled: ${NORTHBANK_DEMO_SEED_ENABLED:true}

@@ -12,6 +12,25 @@ Primary users:
 - Bank Admin: manages customer bank accounts, views transactions across the platform, manages customer users, unlocks locked customers, deactivates customers, and reviews audit logs.
 - Fraud Analyst: manages fraud rules, reviews fraud alerts, and approves or rejects blocked transactions.
 
+## Demo Data
+
+The backend seeds demo data on startup when `northbank.demo.seed-enabled=true`, which defaults to `true` through `NORTHBANK_DEMO_SEED_ENABLED`. The `test` profile disables seeding.
+
+Admin account:
+
+| Email | Password | Purpose |
+| --- | --- | --- |
+| `admin@northbank.test` | `AdminPass123!` | Bank Admin account for customer, account, transaction, and audit management |
+
+Customer accounts:
+
+| Email | Password | Status | Seeded balances |
+| --- | --- | --- | --- |
+| `maria.garcia@northbank.test` | `CustomerPass123!` | `ACTIVE` | Checking `$4,825.75`, Savings `$18,420.00` |
+| `david.chen@northbank.test` | `CustomerPass123!` | `ACTIVE` | Checking `$2,380.40`, Savings `$8,200.00` |
+| `sarah.patel@northbank.test` | `CustomerPass123!` | `LOCKED` | Frozen checking `$380.25`, Savings `$1,500.00` |
+| `leo.martin@northbank.test` | `CustomerPass123!` | `INACTIVE` | Inactive checking `$94.12` |
+
 ## Repository Layout
 
 ```text

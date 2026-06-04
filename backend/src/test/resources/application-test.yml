@@ -25,3 +25,7 @@ security:
   jwt:
     secret: "northbank-test-jwt-secret-us002!!!"
     session-token-expiry-minutes: 5
+
+northbank:
+  demo:
+    seed-enabled: false

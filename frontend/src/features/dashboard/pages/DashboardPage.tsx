@@ -1,4 +1,4 @@
-// Story: US-005 | US-007 | US-010 | US-011 | US-019 | US-020
+// Story: US-005 | US-007 | US-010 | US-011
 import { Link } from 'react-router-dom';
 import { AccountList } from '@/features/accounts/AccountList';
 
@@ -63,13 +63,6 @@ export default function DashboardPage() {
               aria-label="View notifications"
             >
               Notifications
-            </Link>
-            <Link
-              to="/admin/customers"
-              className="btn btn-ghost btn--sm"
-              aria-label="Manage customer accounts"
-            >
-              Admin
             </Link>
           </div>
         </nav>
