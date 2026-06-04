@@ -11,12 +11,19 @@ import com.northbank.registration.transaction.domain.model.TransactionType;
 import com.northbank.registration.transaction.exception.InactiveAccountException;
 import com.northbank.registration.transaction.exception.InsufficientFundsException;
 import com.northbank.registration.transaction.exception.SameAccountTransferException;
+import com.northbank.registration.transaction.exception.TransactionNotFoundException;
 import com.northbank.registration.transaction.exception.TransferAccountAccessDeniedException;
 import com.northbank.registration.transaction.repository.TransactionRepository;
+import com.northbank.registration.transaction.repository.TransactionSpecifications;
+import com.northbank.registration.transaction.service.dto.TransactionDetailResponse;
+import com.northbank.registration.transaction.service.dto.TransactionFilter;
+import com.northbank.registration.transaction.service.dto.TransactionSummaryResponse;
 import com.northbank.registration.transaction.service.dto.TransferRequest;
 import com.northbank.registration.transaction.service.dto.TransferResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +45,35 @@ public class TransactionService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final FraudEvaluationPort fraudEvaluationPort;
+
+    @Transactional(readOnly = true)
+    public Page<TransactionSummaryResponse> listCustomerTransactions(UUID customerId, TransactionFilter filter, Pageable pageable) {
+        return transactionRepository.findAll(TransactionSpecifications.matches(filter, customerId), pageable)
+                .map(this::toSummary);
+    }
+
+    @Transactional(readOnly = true)
+    public TransactionDetailResponse getCustomerTransaction(UUID customerId, UUID transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(TransactionNotFoundException::new);
+        if (!customerId.equals(transaction.getCustomerId())) {
+            throw new TransactionNotFoundException();
+        }
+        return toDetail(transaction);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TransactionSummaryResponse> listAdminTransactions(TransactionFilter filter, Pageable pageable) {
+        return transactionRepository.findAll(TransactionSpecifications.matches(filter, null), pageable)
+                .map(this::toSummary);
+    }
+
+    @Transactional(readOnly = true)
+    public TransactionDetailResponse getAdminTransaction(UUID transactionId) {
+        return transactionRepository.findById(transactionId)
+                .map(this::toDetail)
+                .orElseThrow(TransactionNotFoundException::new);
+    }
 
     @Transactional
     public TransferResponse transfer(UUID customerId, TransferRequest request) {
@@ -120,5 +156,35 @@ public class TransactionService {
         }
         String trimmed = description.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private TransactionSummaryResponse toSummary(Transaction transaction) {
+        return new TransactionSummaryResponse(
+                transaction.getId(),
+                transaction.getCustomerId(),
+                transaction.getType(),
+                transaction.getStatus(),
+                transaction.getAmount(),
+                transaction.getSourceAccountId(),
+                transaction.getDestinationAccountId(),
+                transaction.getDescription(),
+                transaction.getTimestamp()
+        );
+    }
+
+    private TransactionDetailResponse toDetail(Transaction transaction) {
+        return new TransactionDetailResponse(
+                transaction.getId(),
+                transaction.getCustomerId(),
+                transaction.getType(),
+                transaction.getStatus(),
+                transaction.getAmount(),
+                transaction.getSourceAccountId(),
+                transaction.getDestinationAccountId(),
+                transaction.getDescription(),
+                transaction.getTimestamp(),
+                transaction.getCreatedAt(),
+                transaction.getUpdatedAt()
+        );
     }
 }

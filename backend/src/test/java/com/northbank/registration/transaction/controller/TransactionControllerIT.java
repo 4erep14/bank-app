@@ -10,6 +10,8 @@ import com.northbank.registration.customer.domain.model.Customer;
 import com.northbank.registration.customer.domain.model.CustomerStatus;
 import com.northbank.registration.customer.repository.CustomerRepository;
 import com.northbank.registration.transaction.domain.model.TransactionStatus;
+import com.northbank.registration.transaction.domain.model.Transaction;
+import com.northbank.registration.transaction.domain.model.TransactionType;
 import com.northbank.registration.transaction.repository.TransactionRepository;
 import com.northbank.registration.transaction.service.FraudEvaluationPort;
 import com.northbank.registration.transaction.service.FraudEvaluationResult;
@@ -19,9 +21,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -29,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -171,6 +176,84 @@ class TransactionControllerIT extends IntegrationTestBase {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    @DisplayName("US-011: customer can list own transaction history with filters")
+    void listTransactions_returnsOnlyOwnFilteredTransactions() throws Exception {
+        seedTransaction(customerId, checking.getId(), savings.getId(), "20.00", TransactionStatus.COMPLETED, "Visible");
+        seedTransaction(customerId, savings.getId(), checking.getId(), "15.00", TransactionStatus.BLOCKED, "Hidden by status");
+        BankAccount other = seedAccount(otherCustomerId, AccountType.CHECKING, "4234567890", new BigDecimal("50.00"), AccountStatus.ACTIVE);
+        seedTransaction(otherCustomerId, other.getId(), checking.getId(), "7.00", TransactionStatus.COMPLETED, "Other customer");
+
+        mockMvc.perform(get("/api/v1/transactions")
+                        .param("status", "COMPLETED")
+                        .with(jwt().jwt(j -> j.subject(customerId.toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].description").value("Visible"))
+                .andExpect(jsonPath("$.content[0].customerId").value(customerId.toString()));
+    }
+
+    @Test
+    @DisplayName("US-012: customer can view own transaction detail")
+    void getTransaction_ownTransaction_returnsDetail() throws Exception {
+        Transaction transaction = seedTransaction(customerId, checking.getId(), savings.getId(), "44.00", TransactionStatus.COMPLETED, "Detail");
+
+        mockMvc.perform(get("/api/v1/transactions/{id}", transaction.getId())
+                        .with(jwt().jwt(j -> j.subject(customerId.toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(transaction.getId().toString()))
+                .andExpect(jsonPath("$.sourceAccountId").value(checking.getId().toString()))
+                .andExpect(jsonPath("$.destinationAccountId").value(savings.getId().toString()));
+    }
+
+    @Test
+    @DisplayName("US-012: customer cannot view another customer's transaction")
+    void getTransaction_otherCustomerTransaction_returns404() throws Exception {
+        BankAccount other = seedAccount(otherCustomerId, AccountType.CHECKING, "5234567890", new BigDecimal("50.00"), AccountStatus.ACTIVE);
+        Transaction transaction = seedTransaction(otherCustomerId, other.getId(), checking.getId(), "12.00", TransactionStatus.COMPLETED, "Other");
+
+        mockMvc.perform(get("/api/v1/transactions/{id}", transaction.getId())
+                        .with(jwt().jwt(j -> j.subject(customerId.toString()))))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("US-013: admin can list transactions across customers")
+    void adminListTransactions_withAdminRole_returnsSystemWideTransactions() throws Exception {
+        seedTransaction(customerId, checking.getId(), savings.getId(), "20.00", TransactionStatus.COMPLETED, "Customer one");
+        BankAccount other = seedAccount(otherCustomerId, AccountType.CHECKING, "6234567890", new BigDecimal("50.00"), AccountStatus.ACTIVE);
+        seedTransaction(otherCustomerId, other.getId(), savings.getId(), "7.00", TransactionStatus.BLOCKED, "Customer two");
+
+        mockMvc.perform(get("/api/v1/admin/transactions")
+                        .with(jwt()
+                                .jwt(j -> j.subject(customerId.toString()))
+                                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2));
+    }
+
+    @Test
+    @DisplayName("US-013: non-admin cannot access admin transaction overview")
+    void adminListTransactions_withoutAdminRole_returns403() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/transactions")
+                        .with(jwt().jwt(j -> j.subject(customerId.toString()))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("US-013: admin can view any transaction detail")
+    void adminGetTransaction_withAdminRole_returnsDetail() throws Exception {
+        Transaction transaction = seedTransaction(customerId, checking.getId(), savings.getId(), "88.00", TransactionStatus.COMPLETED, "Admin detail");
+
+        mockMvc.perform(get("/api/v1/admin/transactions/{id}", transaction.getId())
+                        .with(jwt()
+                                .jwt(j -> j.subject(customerId.toString()))
+                                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(transaction.getId().toString()))
+                .andExpect(jsonPath("$.customerId").value(customerId.toString()));
+    }
+
     private String json(UUID sourceId, UUID destinationId, String amount, String description) throws Exception {
         return objectMapper.writeValueAsString(Map.of(
                 "sourceAccountId", sourceId,
@@ -199,6 +282,26 @@ class TransactionControllerIT extends IntegrationTestBase {
                 .accountNumber(number)
                 .balance(balance)
                 .status(status)
+                .build());
+    }
+
+    private Transaction seedTransaction(
+            UUID ownerId,
+            UUID sourceId,
+            UUID destinationId,
+            String amount,
+            TransactionStatus status,
+            String description) {
+
+        return transactionRepository.saveAndFlush(Transaction.builder()
+                .customerId(ownerId)
+                .type(TransactionType.TRANSFER)
+                .status(status)
+                .amount(new BigDecimal(amount))
+                .sourceAccountId(sourceId)
+                .destinationAccountId(destinationId)
+                .description(description)
+                .timestamp(OffsetDateTime.now())
                 .build());
     }
 }

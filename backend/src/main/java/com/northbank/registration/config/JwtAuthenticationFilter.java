@@ -13,13 +13,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -163,7 +166,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // ── Step 6: Set SecurityContext — principal = customer UUID ───────────
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(customerId, null, Collections.emptyList());
+                new UsernamePasswordAuthenticationToken(customerId, null, resolveAuthorities(claims));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // ── Step 7: Continue filter chain ────────────────────────────────────
@@ -188,5 +191,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 escapedDetail, escapedInstance
         );
         response.getWriter().write(body);
+    }
+
+    private List<SimpleGrantedAuthority> resolveAuthorities(Claims claims) {
+        Object rolesClaim = claims.get("roles");
+        if (rolesClaim == null) {
+            rolesClaim = claims.get("authorities");
+        }
+        if (!(rolesClaim instanceof List<?> values)) {
+            return Collections.emptyList();
+        }
+
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        for (Object value : values) {
+            if (value instanceof String role && !role.isBlank()) {
+                String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                authorities.add(new SimpleGrantedAuthority(authority));
+            }
+        }
+        return authorities;
     }
 }

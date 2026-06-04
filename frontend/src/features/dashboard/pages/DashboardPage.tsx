@@ -1,4 +1,4 @@
-// Story: US-005 | US-007 | US-010
+// Story: US-005 | US-007 | US-010 | US-011
 import { Link } from 'react-router-dom';
 import { AccountList } from '@/features/accounts/AccountList';
 
@@ -42,6 +42,13 @@ export default function DashboardPage() {
               aria-label="Transfer money between your accounts"
             >
               Transfer
+            </Link>
+            <Link
+              to="/transactions"
+              className="btn btn-ghost btn--sm"
+              aria-label="View transaction history"
+            >
+              History
             </Link>
             <Link
               to="/profile"

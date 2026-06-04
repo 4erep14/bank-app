@@ -1,4 +1,4 @@
-// Story: US-001 | US-002 | US-003 | US-004 | US-005 | US-006 | US-007 | US-008 | US-010
+// Story: US-001 | US-002 | US-003 | US-004 | US-005 | US-006 | US-007 | US-008 | US-010 | US-011 | US-012 | US-013
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RegistrationPage from '@/features/registration/pages/RegistrationPage';
 import RegistrationSuccess from '@/features/registration/components/RegistrationSuccess';
@@ -16,6 +16,10 @@ import DashboardPage from '@/features/dashboard/pages/DashboardPage';
 import { AccountDetailPage } from '@/features/accounts/AccountDetailPage';
 // US-010: Internal fund transfer
 import TransferPage from '@/features/transactions/pages/TransferPage';
+import TransactionHistoryPage from '@/features/transactions/pages/TransactionHistoryPage';
+import TransactionDetailPage from '@/features/transactions/pages/TransactionDetailPage';
+import AdminTransactionsPage from '@/features/transactions/pages/AdminTransactionsPage';
+import AdminTransactionDetailPage from '@/features/transactions/pages/AdminTransactionDetailPage';
 
 export const router = createBrowserRouter([
   {
@@ -93,5 +97,25 @@ export const router = createBrowserRouter([
     // US-010: Transfer funds between own active accounts.
     path: '/transfer',
     element: <TransferPage />,
+  },
+  {
+    // US-011: Customer transaction history.
+    path: '/transactions',
+    element: <TransactionHistoryPage />,
+  },
+  {
+    // US-012: Customer transaction details.
+    path: '/transactions/:transactionId',
+    element: <TransactionDetailPage />,
+  },
+  {
+    // US-013: Admin transaction overview.
+    path: '/admin/transactions',
+    element: <AdminTransactionsPage />,
+  },
+  {
+    // US-013: Admin transaction detail.
+    path: '/admin/transactions/:transactionId',
+    element: <AdminTransactionDetailPage />,
   },
 ]);

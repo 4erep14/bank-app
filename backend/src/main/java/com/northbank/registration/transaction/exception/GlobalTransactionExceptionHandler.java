@@ -32,6 +32,11 @@ public class GlobalTransactionExceptionHandler {
         return problem(HttpStatus.UNPROCESSABLE_ENTITY, "Account Inactive", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(TransactionNotFoundException.class)
+    public ProblemDetail handleTransactionNotFound(TransactionNotFoundException ex, HttpServletRequest request) {
+        return problem(HttpStatus.NOT_FOUND, "Transaction Not Found", ex.getMessage(), request);
+    }
+
     private ProblemDetail problem(HttpStatus status, String title, String detail, HttpServletRequest request) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
         problem.setTitle(title);
